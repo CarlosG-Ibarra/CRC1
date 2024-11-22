@@ -1,0 +1,171 @@
+/* General Styles */
+body {
+  font-family: 'Arial', sans-serif;
+  background-color: #f5f5f5;
+  margin: 0;
+  padding: 0;
+}
+
+.buscador-vales-container {
+  max-width: 800px;
+  margin: 40px auto;
+  background-color: #fff;
+  padding: 50px;
+  border-radius: 50px;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+}
+
+.buscador-vales-container:hover {
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+}
+
+/* Title Styles */
+.buscador-vales-title {
+  text-align: center;
+  font-size: 22px;
+  color: #333;
+  margin-bottom: 20px;
+  font-weight: bold;
+  letter-spacing: 1px;
+}
+
+/* Search Input Styles */
+.buscador-vales-input {
+  width: 100%;
+  padding: 22px;
+  font-size: 16px;
+  color: #333;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  background-color: #f9f9f9;
+  margin-bottom: 20px;
+  transition: border-color 0.3s;
+}
+
+.buscador-vales-input:focus {
+  border-color: #007bff;
+  outline: none;
+}
+
+/* List Styles */
+.buscador-vales-list {
+  margin-top: 10px;
+}
+
+.buscador-vales-item {
+  padding: 15px;
+  border: 1px solid #ddd;
+  background-color: #f9f9f9;
+  border-radius: 5px;
+  margin-bottom: 10px;
+  transition: background-color 0.3s, border-color 0.3s;
+}
+
+.buscador-vales-item:hover {
+  background-color: #f1f1f1;
+  border-color: #ccc;
+}
+
+.buscador-vales-item p {
+  margin: 5px 0;
+  font-size: 14px;
+  color: #555;
+}
+
+/* Placeholder for No Results */
+.buscador-vales-list p {
+  text-align: center;
+  color: black;
+}
+
+/* Button Styles */
+.buscador-vales-button {
+  width: 100%;
+  padding: 12px;
+  font-size: 16px;
+  font-weight: bold;
+  background-color: #007bff;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  margin-top: 20px;
+  transition: background-color 0.3s;
+}
+
+.buscador-vales-button:hover {
+  background-color: #0056b3;
+}
+
+.vale-detalle {
+  border: 2px solid #C14A88; /* Borde rosa */
+  border-radius: 10px; /* Bordes redondeados */
+  background-color: #f8f9fa; /* Color de fondo claro */
+  padding: 20px; /* Espaciado interno */
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2); /* Sombra del ticket */
+  margin-top: 20px; /* Margen superior para separarlo de la lista */
+  font-family: 'Courier New', Courier, monospace; /* Fuente tipo ticket */
+  width: 100%; /* Asegura que ocupe todo el ancho disponible */
+  max-width: 760px; /* Ancho máximo para el ticket */
+  text-align: left; /* Alinear el texto a la izquierda */
+}
+
+.detalle-vale {
+  display: flex; /* Usar flexbox para centrar el contenido */
+  flex-direction: column; /* Alinear los elementos en columna */
+  align-items: center; /* Centrar horizontalmente */
+  text-align: center; /* Centrar el texto */
+}
+
+.vale-detalle h2 {
+  text-align: center; /* Centrar el título */
+  margin-bottom: 15px; /* Margen inferior */
+  color: #090909; /* Color oscuro para el título */
+  font-size: 1.5rem; /* Tamaño de fuente para el título */
+}
+
+.vale-detalle h3 {
+  margin-top: 15px; /* Margen superior */
+  color: #333; /* Color para los subtítulos */
+  font-size: 1.2rem; /* Tamaño de fuente para los subtítulos */
+}
+
+.vale-detalle p {
+  margin: 5px 0; /* Margen para los párrafos */
+  font-size: 1rem; /* Tamaño de fuente para los párrafos */
+  color: #555; /* Color para el texto de los párrafos */
+}
+
+.firmas-container {
+  display: flex; /* Usar flexbox para organizar las firmas */
+  justify-content: space-between; /* Espaciado entre firmas */
+  margin-top: 20px; /* Margen superior */
+  border-top: 1px solid #ccc; /* Línea divisoria superior */
+  padding-top: 10px; /* Espaciado superior */
+}
+
+.firma {
+  text-align: center; /* Centrar las firmas */
+}
+
+.firma-imagen {
+  max-width: 100px; /* Ancho máximo de las imágenes de las firmas */
+  max-height: 50px; /* Altura máxima de las imágenes de las firmas */
+  margin-top: 10px; /* Espaciado superior */
+}
+
+.vale-back-button {
+  margin-top: 20px; /* Margen superior para el botón */
+  padding: 10px 15px; /* Espaciado interno */
+  background-color: #007bff; /* Color de fondo */
+  color: white; /* Color del texto */
+  border: none; /* Sin borde */
+  border-radius: 5px; /* Bordes redondeados */
+  cursor: pointer; /* Cambia el cursor al pasar por encima */
+  width: 100%; /* Botón de ancho completo */
+}
+
+.vale-back-button:hover {
+  background-color: #0056b3; /* Color de fondo al pasar el ratón */
+}

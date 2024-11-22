@@ -1,0 +1,15 @@
+.Administracion-content {
+  padding: 150px;
+  margin: 0 auto;
+  max-width: 1000px;
+  background-color: #f4f6f8; /* Fondo claro general */
+}
+
+
+.Administracion-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 15px;
+  justify-content: space-between;
+  margin-bottom: 30px; /* Espacio adicional entre las opciones y el contenido */
+}

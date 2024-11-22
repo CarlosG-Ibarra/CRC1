@@ -1,0 +1,22 @@
+/* Ensure the html and body take up the full height of the viewport */
+html, body {
+  height: 100%;
+  margin: 0;
+  position: relative; /* Allow positioning within the body */
+  
+}
+
+/* Set up #root to use relative positioning */
+#root {
+  min-height: 100vh; /* Ensures #root covers at least the full height of the viewport */
+  position: relative; /* Allow the footer to be positioned absolutely */
+}
+
+/* Style for the footer to stick to the bottom */
+footer {
+  position: absolute;
+  bottom: 0;
+  width: 100%; /* Ensure it spans the width of the viewport */
+}
+
+::-webkit-scrollbar {display:none;}

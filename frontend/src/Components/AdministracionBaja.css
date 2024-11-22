@@ -1,0 +1,87 @@
+#baja-container {
+    padding: 20px;
+    margin: 0 auto;
+    max-width: 1200px;
+    background-color: #f4f6f8; /* Light background color */
+  }
+  
+  #baja-header {
+    font-size: 2.5rem;
+    margin-bottom: 25px;
+    text-align: center;
+    font-weight: 600;
+    color: #1d3172; /* Strong blue for the header */
+  }
+  #baja-search {
+    width: 100%;
+    padding: 10px;
+    margin-bottom: 20px; /* Space below the search bar */
+    border: 1px solid #ddd; /* Light border for the input */
+    border-radius: 5px; /* Rounded corners */
+    font-size: 1rem; /* Font size for the input */
+  }
+  
+  
+  #baja-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 30px; /* Space below the table */
+  }
+  
+  #baja-table th, #baja-table td {
+    padding: 15px;
+    text-align: center;
+    border-bottom: 1px solid #ddd; /* Light border for the table rows */
+  }
+  
+  #baja-table th {
+    background-color: #238dbf;
+    color: white;
+    font-weight: bold;
+    font-size: 1.1rem;
+  }
+  
+  #baja-table td {
+    background-color: #ffffff;
+    color: #333;
+  }
+  
+  #baja-table tr:nth-child(even) td {
+    background-color: #f0f4f8; /* Alternating row background color */
+  }
+  
+  #baja-table tr:hover td {
+    background-color: #e0f7fa; /* Hover effect for rows */
+  }
+  
+  #baja-table td button {
+    background-color: #C14A88;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 1rem;
+    transition: background-color 0.3s;
+  }
+  
+  #baja-table td button:hover {
+    background-color: #d43f3f; /* Darker red on hover */
+  }
+  
+  /* For small screens */
+  @media (max-width: 768px) {
+    #baja-header {
+      font-size: 2rem;
+    }
+  
+    #baja-table th, #baja-table td {
+      padding: 10px;
+    }
+  
+    #baja-table td button {
+      padding: 8px 15px;
+      font-size: 0.9rem;
+    }
+  }
+  

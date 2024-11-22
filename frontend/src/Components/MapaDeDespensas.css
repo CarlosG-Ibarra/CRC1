@@ -1,0 +1,207 @@
+/* General Container */
+.mapa-despensas {
+    max-width: 1000px;
+    width: 100%;
+    margin: 0 auto;
+    padding: 25px;
+    background-color: #f4f6f8;
+    border-radius: 15px;
+    box-shadow: 0 6px 25px rgba(0, 0, 0, 0.1);
+    min-height: calc(100vh - 175px);
+    box-sizing: border-box;
+    font-family: 'Roboto', sans-serif;
+    cursor: pointer;
+}
+
+/* Titles and Headings */
+.mapa-despensas__title {
+    text-align: center;
+    color: #1d3172;
+    font-size: 2.5rem;
+    margin-bottom: 25px;
+    font-weight: 700;
+}
+
+.mapa-despensas__subtitle,
+.mapa-despensas__available-routes-title {
+    text-align: center;
+    margin: 20px 0;
+    font-size: 1.5rem;
+    color: #666;
+}
+
+/* Header Bar */
+.mapa-despensas__header-bar {
+    display: flex;
+    justify-content: space-between;
+    padding: 10px 15px;
+    background-color: #e0e0e0;
+    color: #333;
+    font-weight: bold;
+    border-radius: 8px;
+    margin-bottom: 15px;
+    font-size: 1.1rem;
+}
+
+.header-item {
+    flex: 1;
+    text-align: center;
+}
+
+/* Routes and Selected Addresses List */
+.mapa-despensas__routes {
+    position: relative;
+    margin-bottom: 20px;
+}
+
+.mapa-despensas__routes ul {
+    max-height: calc(76px * 4); /* 76px is approximate height of each item */
+    overflow-y: auto;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    scrollbar-width: thin;
+    scrollbar-color: #888 #f4f6f8;
+}
+
+.mapa-despensas__routes ul::-webkit-scrollbar {
+    width: 8px;
+}
+
+.mapa-despensas__routes ul::-webkit-scrollbar-track {
+    background: #f4f6f8;
+    border-radius: 4px;
+}
+
+.mapa-despensas__routes ul::-webkit-scrollbar-thumb {
+    background-color: #888;
+    border-radius: 4px;
+    border: 2px solid #f4f6f8;
+}
+
+.mapa-despensas__routes li {
+    display: flex; /* Enable Flexbox */
+    justify-content: space-between; /* Distribute space evenly between items */
+    padding: 15px;
+    background-color: #ffffff;
+    margin-bottom: 15px;
+    border-radius: 10px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    cursor: pointer;
+    transition: background-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.mapa-despensas__routes li span {
+    flex: 1; /* Each span will take equal space */
+    text-align: center; /* Center text within each span */
+}
+
+.mapa-despensas__routes li:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.mapa-despensas__address-street {
+    font-weight: bold;
+    color: #333;
+}
+
+.mapa-despensas__address-colonia {
+    color: #666;
+    font-size: 0.9rem;
+}
+
+/* Map Container */
+.mapa-despensas__map-container {
+    border: 1px solid #ddd;
+    border-radius: 15px;
+    margin: 25px 0;
+}
+
+.mapa-despensas__map {
+    width: 100%;
+    height: 400px;
+    margin-bottom: 25px;
+    border-radius: 15px;
+    overflow: hidden;
+    box-shadow: 0 3px 15px rgba(0, 0, 0, 0.1);
+}
+
+/* Buttons */
+.mapa-despensas__actions {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.mapa-despensas__actions button {
+    padding: 15px;
+    border-radius: 8px;
+    font-size: 1.2rem;
+    cursor: pointer;
+    transition: background-color 0.3s ease, transform 0.2s ease, box-shadow 0.3s ease;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+.mapa-despensas__actions button:first-child {
+    background-color: #238dbf;
+    color: #ffffff;
+}
+
+.mapa-despensas__actions button:first-child:hover {
+    background-color: #1D3172;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+}
+
+.mapa-despensas__clear-button {
+    background-color: #C14A88;
+    color: #ffffff;
+    margin-left: auto;
+}
+
+.mapa-despensas__clear-button:hover {
+    background-color: #d43f3f;
+}
+
+/* Responsive Adjustments */
+@media (max-width: 768px) {
+    .mapa-despensas__title {
+        font-size: 2rem;
+    }
+    .mapa-despensas__subtitle,
+    .mapa-despensas__available-routes-title {
+        font-size: 1.4rem;
+    }
+    .mapa-despensas__button {
+        font-size: 1rem;
+        padding: 12px;
+    }
+    .mapa-despensas__routes-item,
+    .mapa-despensas__selected-item {
+        font-size: 1rem;
+    }
+    .header-item {
+        font-size: 1rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .mapa-despensas {
+        padding: 15px;
+    }
+    .mapa-despensas__title {
+        font-size: 1.8rem;
+    }
+    .mapa-despensas__subtitle,
+    .mapa-despensas__available-routes-title {
+        font-size: 1.2rem;
+    }
+    .mapa-despensas__button {
+        font-size: 0.9rem;
+        padding: 10px;
+    }
+    .mapa-despensas__routes-item,
+    .mapa-despensas__selected-item {
+        font-size: 0.9rem;
+    }
+}

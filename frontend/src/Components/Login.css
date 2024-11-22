@@ -1,0 +1,132 @@
+.login-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    background-color: #fff;
+    flex-direction: column;
+    position: relative;
+    background-image: url('../Assets/Fondologin.png');
+    background-size: cover; 
+    background-repeat: no-repeat;
+    background-position: center; 
+}
+
+.login-form {
+    background-color: rgba(255, 255, 255, 0.15); 
+    backdrop-filter: blur(10px); 
+    padding: 40px;
+    border-radius: 15px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+    max-width: 90%; 
+    width: 100%; 
+    max-width: 350px; 
+    text-align: center;
+}
+
+
+.login-form input {
+    width: 100%;
+    padding: 15px;
+    margin: 10px 0;
+    border: none;
+    outline: none;
+    border-radius: 30px;
+    background-color: rgba(255, 255, 255, 0.3);
+    color: #fff;
+    font-size: 16px;
+}
+
+
+.login-form button {
+    width: 100%;
+    padding: 15px;
+    background-color: #238dbf;
+    border: none;
+    color: #fff;
+    font-size: 16px;
+    border-radius: 30px;
+    cursor: pointer;
+    margin-top: 20px;
+    transition: background-color 0.3s ease;
+}
+
+
+.login-form button:hover {
+    background-color: #1D3172;
+}
+
+
+.skip-button {
+    margin-top: 20px;
+    padding: 10px 20px;
+    border: none;
+    background-color: #6c757d;
+    color: #fff;
+    border-radius: 30px;
+    cursor: pointer;
+}
+
+.skip-button:hover {
+    background-color: #5a6268;
+}
+
+@media (max-width: 768px) {
+    .login-container {
+        background: linear-gradient(to right, #0192C8, #496D9F, #41558A, #2F3F7B, #14296C); /* Gradient for mobile */
+        background-size: cover;
+        background-position: center;
+    }
+
+    .login-form {
+        padding: 20px;
+        max-width: 80%; /* Narrow the form */
+        width: 100%; 
+    }
+
+    .login-form input {
+        padding: 12px;
+        font-size: 14px;
+        max-width: 80%;
+    }
+
+    .login-form button {
+        padding: 12px;
+        font-size: 14px;
+    }
+
+    .skip-button {
+        padding: 8px 16px;
+    }
+}
+
+@media (max-width: 480px) {
+    .login-container {
+        background: linear-gradient(to right, #0192C8, #496D9F, #41558A, #2F3F7B, #14296C); /* Gradient for smaller screens */
+        background-size: cover;
+        background-position: center;
+    }
+
+    .login-form {
+        padding: 15px;
+        max-width: 90%; /* Further narrow the form on very small screens */
+        width: 100%; 
+    }
+
+    .login-form input {
+        padding: 10px;
+        font-size: 12px;
+        max-width: 80%;
+    }
+
+    .login-form button {
+        padding: 10px;
+        font-size: 12px;
+    }
+
+    .skip-button {
+        padding: 6px 12px;
+    }
+}
+
+
