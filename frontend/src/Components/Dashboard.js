@@ -110,7 +110,7 @@ const Dashboard = () => {
           />
           Vales De Salida
         </Link>
-        <Link to="/vales-entradas" className="option-button-dashboard">
+        <Link to="/entrada-vales" className="option-button-dashboard">
           <FontAwesomeIcon
             icon={faFileImport}
             className="button-icon-dashboard"

@@ -4,6 +4,7 @@ import Login from './Components/Login';
 import Header from './Components/Header';
 import EntregarDespensas from './Components/EntregarDespensas';
 import ValesSalida from './Components/ValesSalida';
+import EntradaVales from './Components/EntradaVales';
 import Footer from './Components/Footer'; 
 import MapaDeDespensas from './Components/MapaDeDespensas'; 
 import './index.css';
@@ -43,6 +44,7 @@ function App() {
                 
                 <Route path="/entregar-despensas" element={user ? <EntregarDespensas /> : <Navigate to="/" />} />
                 <Route path="/vales-salidas" element={user ? <ValesSalida /> : <Navigate to="/" />} />
+                <Route path="/entrada-vales" element={user ? <EntradaVales /> : <Navigate to="/" />} />
                 <Route path="/map" element={user ? <MapaDeDespensas /> : <Navigate to="/" />} />
                 <Route path="/registre-despensas" element={user ? <RegistroDespensas /> : <Navigate to="/" />} />  
                 <Route path="/vales-consultas" element={user ? <ConsultarVales /> : <Navigate to="/" />} /> 
