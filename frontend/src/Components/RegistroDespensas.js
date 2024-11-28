@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import './RegistroDespensas.css'; 
 
 function RegistroDespensas() {
@@ -12,12 +12,68 @@ function RegistroDespensas() {
     zona: ''
   });
 
+  const [suggestions, setSuggestions] = useState([]);
+  const [debouncedName, setDebouncedName] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [isNameFinalized, setIsNameFinalized] = useState(false);
+  const debounceTimer = useRef(null);
+
   const handleChange = (e) => {
     const { name, value } = e.target;
+    
+    if (name === 'nombre') {
+      // Reset the finalized flag and clear the timer when typing
+      setIsNameFinalized(false);
+      clearTimeout(debounceTimer.current);
+
+      // Debounce the name input
+      debounceTimer.current = setTimeout(() => {
+        setDebouncedName(value);
+      }, 200);
+    }
+
     setFormData({
       ...formData,
       [name]: value
     });
+  };
+
+  useEffect(() => {
+    if (debouncedName.length > 2 && !isNameFinalized) {
+      setIsLoading(true);
+      console.log("Fetching data for:", debouncedName);
+
+      fetch(`http://localhost:3001/api/check-delivery?nombre=${debouncedName}`)
+        .then((response) => response.json())
+        .then((data) => {
+          console.log("Response data:", data);
+          setSuggestions(Array.isArray(data) ? data : []);
+          setIsLoading(false);
+        })
+        .catch((error) => {
+          console.error("Error fetching names:", error);
+          setSuggestions([]);
+          setIsLoading(false);
+        });
+    } else {
+      setSuggestions([]);
+    }
+  }, [debouncedName, isNameFinalized]);
+
+  const handleSuggestionSelect = (suggestion) => {
+    setFormData((prevData) => ({
+      ...prevData,
+      nombre: suggestion.nombre_solicitante,
+      calle: suggestion.calle,
+      numero: suggestion.numero,
+      colonia: suggestion.colonia,
+      cp: suggestion.cp,
+      telefono: suggestion.tel,
+      zona: suggestion.zona
+    }));
+    
+    setSuggestions([]);
+    setIsNameFinalized(true);
   };
 
   const handleSubmit = async (e) => {
@@ -63,14 +119,29 @@ function RegistroDespensas() {
       <form onSubmit={handleSubmit}>
         <div className="registro-despensas-form-group">
           <label htmlFor="nombre">Nombre</label>
-          <input
-            type="text"
-            id="nombre"
-            name="nombre"
-            value={formData.nombre}
-            onChange={handleChange}
-            required
-          />
+          <div className="input-with-suggestions">
+            <input
+              type="text"
+              id="nombre"
+              name="nombre"
+              value={formData.nombre}
+              onChange={handleChange}
+              required
+            />
+            {suggestions.length > 0 && (
+              <ul className="suggestions-list">
+                {suggestions.map((suggestion) => (
+                  <li
+                    key={suggestion.id_despensa}
+                    onClick={() => handleSuggestionSelect(suggestion)}
+                  >
+                    {suggestion.nombre_solicitante}
+                  </li>
+                ))}
+              </ul>
+            )}
+            {isLoading && <div className="loading-indicator">Cargando...</div>}
+          </div>
         </div>
         <div className="registro-despensas-form-group">
           <label htmlFor="calle">Calle</label>

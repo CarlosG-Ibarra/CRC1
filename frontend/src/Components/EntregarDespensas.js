@@ -19,7 +19,7 @@ const EntregarDespensas = () => {
     cp: "",
     tel: "",
     zona: "",
-    ruta: 1, // Ensure this matches `dataToSubmit`
+    ruta: "0",
 
     // Family Integration
     nombre1: "",
@@ -76,11 +76,15 @@ const EntregarDespensas = () => {
 
     // Miscellaneous
     firma: "",
-    ine1: null, // Set to `null` like `dataToSubmit`
-    ine2: null, // Set to `null` like `dataToSubmit`
-    ine3: null, // Set to `null` like `dataToSubmit`
+    ine1: null,
+    ine2: null,
+    ine3: null,
     comentarios: "",
   });
+
+  const getFileExtension = (filename) => {
+    return filename.slice(((filename.lastIndexOf(".") - 1) >>> 0) + 1);
+  };
 
   const [suggestions, setSuggestions] = useState([]); // Initialize as empty array
   const [debouncedName, setDebouncedName] = useState(""); // Debounced name input
@@ -177,7 +181,7 @@ const EntregarDespensas = () => {
   const handleSuggestionSelect = (suggestion) => {
     setFormData((prevData) => ({
       ...prevData,
-      nombreSolicitante: suggestion.nombre,
+      nombreSolicitante: suggestion.nombre_solicitante,
       motivo: suggestion.motivo,
       edad: suggestion.edad,
       colonia: suggestion.colonia,
@@ -185,9 +189,15 @@ const EntregarDespensas = () => {
       numero: suggestion.numero,
       tel: suggestion.tel,
       zona: suggestion.zona,
+      cp: suggestion.cp,
+      sexo: suggestion.sexo,
+      genero: suggestion.genero,
+      escolaridad: suggestion.escolaridad,
+      ocupacion: suggestion.ocupacion,
+      estadoCivil: suggestion.estado_civil,
 
       // Add family data autofill here
-      nombre1: suggestion.nombre1,
+      nombre1: suggestion.nombre_1,
       sexoIntegrante1: suggestion.sexo_integrante_1,
       parentesco1: suggestion.parentesco_1,
       edadIntegrante1: suggestion.edad_integrante_1,
@@ -196,7 +206,7 @@ const EntregarDespensas = () => {
       escolaridadIntegrante1: suggestion.escolaridad_integrante_1,
       ingresoSol1: suggestion.ingreso_sol1,
 
-      nombre2: suggestion.nombre2,
+      nombre2: suggestion.nombre_2,
       sexoIntegrante2: suggestion.sexo_integrante_2,
       parentesco2: suggestion.parentesco_2,
       edadIntegrante2: suggestion.edad_integrante_2,
@@ -205,7 +215,7 @@ const EntregarDespensas = () => {
       escolaridadIntegrante2: suggestion.escolaridad_integrante_2,
       ingresoSol2: suggestion.ingreso_sol2,
 
-      nombre3: suggestion.nombre3,
+      nombre3: suggestion.nombre_3,
       sexoIntegrante3: suggestion.sexo_integrante_3,
       parentesco3: suggestion.parentesco_3,
       edadIntegrante3: suggestion.edad_integrante_3,
@@ -230,6 +240,14 @@ const EntregarDespensas = () => {
       escuela: suggestion.escuela,
       internet: suggestion.internet,
       total: suggestion.total,
+
+      vehiculo: suggestion.vehiculo,
+      situacionLegal: suggestion.situacionLegal,
+      materialParedes: suggestion.materialParedes,
+      materialTecho: suggestion.materialTecho,
+      materialPiso: suggestion.materialPiso,
+      numCuartos: suggestion.numCuartos,
+      nivelSocioEconomico: suggestion.nivelSocioEconomico,
     }));
     // Mark the name as finalized
     setIsNameFinalized(true);
@@ -243,163 +261,270 @@ const EntregarDespensas = () => {
 
   const handleFileUploads = async () => {
     try {
-      // Create FormData to send to the backend
+      const fileNames = {
+        ine1: null,
+        ine2: null,
+        ine3: null,
+        firma: null,
+      };
+
+      // Handle INE files
+      if (formData.ine1)
+        fileNames.ine1 = `${formData.nombreSolicitante}-ine1.${getFileExtension(
+          formData.ine1.name
+        )}`;
+      if (formData.ine2)
+        fileNames.ine2 = `${formData.nombreSolicitante}-ine2.${getFileExtension(
+          formData.ine2.name
+        )}`;
+      if (formData.ine3)
+        fileNames.ine3 = `${formData.nombreSolicitante}-ine3.${getFileExtension(
+          formData.ine3.name
+        )}`;
+
+      // Handle signature
+      if (signatureRef.current && !signatureRef.current.isEmpty()) {
+        fileNames.firma = `${formData.nombreSolicitante}-firma.png`;
+      }
+
+      // Create FormData here, before using it
       const formDataToSend = new FormData();
-
-      // Append basic form data (e.g., nombreSolicitante)
       formDataToSend.append("nombreSolicitante", formData.nombreSolicitante);
+      if (formData.ine1)
+        formDataToSend.append("ine1", formData.ine1, fileNames.ine1);
+      if (formData.ine2)
+        formDataToSend.append("ine2", formData.ine2, fileNames.ine2);
+      if (formData.ine3)
+        formDataToSend.append("ine3", formData.ine3, fileNames.ine3);
 
-      // Append files only if they exist in the formData state
-      if (formData.ine1) formDataToSend.append("ine1", formData.ine1);
-      if (formData.ine2) formDataToSend.append("ine2", formData.ine2);
-      if (formData.ine3) formDataToSend.append("ine3", formData.ine3);
-
-      // Append signature as a Blob if it exists
+      // Handle signature
       if (signatureRef.current && !signatureRef.current.isEmpty()) {
         const signatureDataUrl = signatureRef.current.toDataURL("image/png");
         const blob = await (await fetch(signatureDataUrl)).blob();
-        const file = new File(
-          [blob],
-          `${formData.nombreSolicitante}-firma.png`,
-          {
-            type: "image/png",
-          }
-        );
+        const file = new File([blob], fileNames.firma, { type: "image/png" });
         formDataToSend.append("firma", file);
       }
 
-      console.log("Uploading files:", formDataToSend);
-
-      // Send the FormData to the backend
+      // Upload files
       const response = await fetch("http://localhost:3001/api/upload-files", {
         method: "POST",
         body: formDataToSend,
       });
 
-      const result = await response.json();
-      console.log("Upload response:", result);
-      alert("Files uploaded successfully!");
+      if (!response.ok) throw new Error("File upload failed");
+
+      return fileNames;
     } catch (error) {
       console.error("Error during file upload:", error);
-      alert("Error uploading files. Please try again.");
+      throw error;
     }
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // Prepare the data object to submit
-    const dataToSubmit = {
-      // Personal details
-      nombreSolicitante: formData.nombreSolicitante,
-      calle: formData.calle,
-      numero: formData.numero,
-      colonia: formData.colonia,
-      cp: formData.cp,
-      tel: formData.tel,
-      zona: formData.zona,
-      ruta: formData.ruta || 0, // Ensure ruta is set correctly
+    try {
+      // First upload files and get the filenames
+      const fileNames = await handleFileUploads();
 
-      // Study details
-      motivo: formData.motivo,
-      edad: formData.edad,
-      sexo: formData.sexo,
-      genero: formData.genero,
-      estadoCivil: formData.estadoCivil,
-      escolaridad: formData.escolaridad,
-      ocupacion: formData.ocupacion,
-      fechaRegistro: formData.fechaRegistro,
+      // Prepare the data object to submit
+      const dataToSubmit = {
+        // Personal details
+        nombre_solicitante: formData.nombreSolicitante,
+        calle: formData.calle,
+        numero: formData.numero,
+        colonia: formData.colonia,
+        cp: formData.cp,
+        tel: formData.tel,
+        zona: formData.zona,
+        ruta: formData.ruta || 0,
 
-      // Family details
-      nombre1: formData.nombre1,
-      sexoIntegrante1: formData.sexoIntegrante1,
-      parentesco1: formData.parentesco1,
-      edadIntegrante1: formData.edadIntegrante1,
-      estadoCivilIntegrante1: formData.estadoCivilIntegrante1,
-      ocupacionIntegrante1: formData.ocupacionIntegrante1,
-      escolaridadIntegrante1: formData.escolaridadIntegrante1,
-      ingresoSol1: formData.ingresoSol1,
+        // Study details
+        motivo: formData.motivo,
+        edad: formData.edad,
+        sexo: formData.sexo,
+        genero: formData.genero,
+        estado_civil: formData.estadoCivil,
+        escolaridad: formData.escolaridad,
+        ocupacion: formData.ocupacion,
+        fecha_registro: formData.fechaRegistro,
 
-      nombre2: formData.nombre2,
-      sexoIntegrante2: formData.sexoIntegrante2,
-      parentesco2: formData.parentesco2,
-      edadIntegrante2: formData.edadIntegrante2,
-      estadoCivilIntegrante2: formData.estadoCivilIntegrante2,
-      ocupacionIntegrante2: formData.ocupacionIntegrante2,
-      escolaridadIntegrante2: formData.escolaridadIntegrante2,
-      ingresoSol2: formData.ingresoSol2,
+        // Family details
+        nombre_1: formData.nombre1,
+        sexo_integrante_1: formData.sexoIntegrante1,
+        parentesco_1: formData.parentesco1,
+        edad_integrante_1: formData.edadIntegrante1,
+        estado_civil_integrante_1: formData.estadoCivilIntegrante1,
+        ocupacion_integrante_1: formData.ocupacionIntegrante1,
+        escolaridad_integrante_1: formData.escolaridadIntegrante1,
+        ingreso_sol1: formData.ingresoSol1,
 
-      nombre3: formData.nombre3,
-      sexoIntegrante3: formData.sexoIntegrante3,
-      parentesco3: formData.parentesco3,
-      edadIntegrante3: formData.edadIntegrante3,
-      estadoCivilIntegrante3: formData.estadoCivilIntegrante3,
-      ocupacionIntegrante3: formData.ocupacionIntegrante3,
-      escolaridadIntegrante3: formData.escolaridadIntegrante3,
-      ingresoSol3: formData.ingresoSol3,
+        nombre_2: formData.nombre2,
+        sexo_integrante_2: formData.sexoIntegrante2,
+        parentesco_2: formData.parentesco2,
+        edad_integrante_2: formData.edadIntegrante2,
+        estado_civil_integrante_2: formData.estadoCivilIntegrante2,
+        ocupacion_integrante_2: formData.ocupacionIntegrante2,
+        escolaridad_integrante_2: formData.escolaridadIntegrante2,
+        ingreso_sol2: formData.ingresoSol2,
 
-      // Monthly expenses
-      ingreso_mensual: formData.ingreso_mensual,
-      aportacion: formData.aportacion,
-      luz: formData.luz,
-      agua: formData.agua,
-      telefono: formData.telefono,
-      creditos: formData.creditos,
-      gas: formData.gas,
-      medicinas: formData.medicinas,
-      transporte: formData.transporte,
-      television: formData.television,
-      renta: formData.renta,
-      alimentacion: formData.alimentacion,
-      escuela: formData.escuela,
-      internet: formData.internet,
-      total: formData.total,
+        nombre_3: formData.nombre3,
+        sexo_integrante_3: formData.sexoIntegrante3,
+        parentesco_3: formData.parentesco3,
+        edad_integrante_3: formData.edadIntegrante3,
+        estado_civil_integrante_3: formData.estadoCivilIntegrante3,
+        ocupacion_integrante_3: formData.ocupacionIntegrante3,
+        escolaridad_integrante_3: formData.escolaridadIntegrante3,
+        ingreso_sol3: formData.ingresoSol3,
 
-      // Belongings and other data
-      vehiculo: formData.vehiculo,
-      situacionLegal: formData.situacionLegal,
-      materialParedes: formData.materialParedes,
-      materialTecho: formData.materialTecho,
-      materialPiso: formData.materialPiso,
-      numCuartos: formData.numCuartos,
-      nivelSocioEconomico: formData.nivelSocioEconomico,
-      firma: formData.firma,
-      ine1: formData.ine1 || null,
-      ine2: formData.ine2 || null,
-      ine3: formData.ine3 || null,
-      comentarios: formData.comentarios,
-    };
+        // Monthly expenses
+        ingreso_mensual: formData.ingreso_mensual,
+        aportacion: formData.aportacion,
+        luz: formData.luz,
+        agua: formData.agua,
+        telefono: formData.telefono,
+        creditos: formData.creditos,
+        gas: formData.gas,
+        medicinas: formData.medicinas,
+        transporte: formData.transporte,
+        television: formData.television,
+        renta: formData.renta,
+        alimentacion: formData.alimentacion,
+        escuela: formData.escuela,
+        internet: formData.internet,
+        total: formData.total,
 
-    // Log the data to check if it has exactly 68 fields (excluding id_despensa)
-    console.log("Data to submit:", dataToSubmit);
-    console.log("Number of fields:", Object.keys(dataToSubmit).length);
+        // Belongings and other data
+        vehiculo: formData.vehiculo,
+        situacionLegal: formData.situacionLegal,
+        materialParedes: formData.materialParedes,
+        materialTecho: formData.materialTecho,
+        materialPiso: formData.materialPiso,
+        numCuartos: formData.numCuartos,
+        nivelSocioEconomico: formData.nivelSocioEconomico,
 
-    
+        // Files and comments
+        firma: fileNames.firma,
+        ine1: fileNames.ine1,
+        ine2: fileNames.ine2,
+        ine3: fileNames.ine3,
+        comentarios: formData.comentarios,
+      };
 
-    // Submit the data to the backend
-  fetch('http://localhost:3001/api/estudio-socioeconomico', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(dataToSubmit),
-  })
-    .then((response) => {
+      console.log("Data to submit:", dataToSubmit);
+
+      // Submit the form data
+      const response = await fetch(
+        "http://localhost:3001/api/estudio-socioeconomico",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(dataToSubmit),
+        }
+      );
+
       if (!response.ok) {
-        return response.json().then((data) => {
-          throw new Error(data.message || "Something went wrong");
-        });
+        const data = await response.json();
+        throw new Error(data.message || "Error al enviar el formulario");
       }
-      return response.json();
-    })
-    .then((data) => {
-      console.log('Success:', data);
-      // Handle success - maybe show a success message or reset form
-    })
-    .catch((error) => {
-      console.error('Error:', error);
-      // Handle error - maybe show an error message to the user
-    });
+
+      const data = await response.json();
+      console.log("Success:", data);
+      alert("¡Formulario de Estudio Socioeconómico enviado correctamente!");
+      // Reset form after successful submission
+      setFormData({
+        // Personal details
+        nombreSolicitante: "",
+        calle: "",
+        numero: "",
+        colonia: "",
+        cp: "",
+        tel: "",
+        zona: "",
+        ruta: "",
+
+        // Study details
+        motivo: "",
+        edad: "",
+        sexo: "",
+        genero: "",
+        estadoCivil: "",
+        escolaridad: "",
+        ocupacion: "",
+        fechaRegistro: "",
+
+        // Family details
+        nombre1: "",
+        sexoIntegrante1: "",
+        parentesco1: "",
+        edadIntegrante1: "",
+        estadoCivilIntegrante1: "",
+        ocupacionIntegrante1: "",
+        escolaridadIntegrante1: "",
+        ingresoSol1: "",
+
+        nombre2: "",
+        sexoIntegrante2: "",
+        parentesco2: "",
+        edadIntegrante2: "",
+        estadoCivilIntegrante2: "",
+        ocupacionIntegrante2: "",
+        escolaridadIntegrante2: "",
+        ingresoSol2: "",
+
+        nombre3: "",
+        sexoIntegrante3: "",
+        parentesco3: "",
+        edadIntegrante3: "",
+        estadoCivilIntegrante3: "",
+        ocupacionIntegrante3: "",
+        escolaridadIntegrante3: "",
+        ingresoSol3: "",
+
+        // Monthly expenses
+        ingreso_mensual: "",
+        aportacion: "",
+        luz: "",
+        agua: "",
+        telefono: "",
+        creditos: "",
+        gas: "",
+        medicinas: "",
+        transporte: "",
+        television: "",
+        renta: "",
+        alimentacion: "",
+        escuela: "",
+        internet: "",
+        total: "",
+
+        // Belongings and other data
+        vehiculo: "",
+        situacionLegal: "",
+        materialParedes: "",
+        materialTecho: "",
+        materialPiso: "",
+        numCuartos: "",
+        nivelSocioEconomico: "",
+
+        // Files and comments
+        firma: "",
+        ine1: null,
+        ine2: null,
+        ine3: null,
+        comentarios: "",
+      });
+
+      // Also clear the signature
+      if (signatureRef.current) {
+        signatureRef.current.clear();
+      }
+    } catch (error) {
+      console.error("Error:", error);
+      alert("Error al enviar el formulario. Por favor, intente nuevamente.");
+    }
   };
 
   return (
@@ -438,10 +563,15 @@ const EntregarDespensas = () => {
                         <div
                           key={index}
                           className="suggestion-item"
-                          onClick={() => handleSuggestionSelect(suggestion)}
+                          onClick={() => {
+                            setFormData((prevData) => ({
+                              ...prevData,
+                              nombreSolicitante: suggestion.nombre_solicitante,
+                            }));
+                            handleSuggestionSelect(suggestion);
+                          }}
                         >
-                          {suggestion.nombre_solicitante}{" "}
-                          {/* Update the field name here */}
+                          {suggestion.nombre_solicitante}
                         </div>
                       ))
                     )}

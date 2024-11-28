@@ -99,15 +99,55 @@ input[type="number"]:focus {
 }
 
 /* Sección de firmas */
-.vale-firma {
+.vale-signatures-container {
     display: flex;
     justify-content: space-between;
     gap: 20px;
-    margin-bottom: 20px;
+    margin-top: 30px;
+    margin-bottom: 30px;
 }
 
-.vale-firma div {
+.vale-signature-group {
     flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 20px;
+    background-color: #f8f9fa;
+    border-radius: 10px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.vale-signature-group h3 {
+    margin-bottom: 15px;
+    color: #333;
+    font-size: 18px;
+    text-align: center;
+}
+
+.signature-canvas {
+    border: 2px solid #ddd;
+    border-radius: 8px;
+    background-color: white;
+    margin-bottom: 15px;
+    max-width: 100%;
+    height: auto;
+}
+
+.vale-signature-group button {
+    padding: 8px 16px;
+    background-color: #0192C8;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: background-color 0.3s, transform 0.2s;
+}
+
+.vale-signature-group button:hover {
+    background-color: #0177A3;
+    transform: translateY(-2px);
 }
 
 /* Botones */
@@ -145,4 +185,93 @@ input[type="number"]:focus {
 
 .vale-back-button:hover {
     background-color: #5a6268;
+}
+
+/* Media Queries */
+@media screen and (max-width: 1200px) {
+    .vale-container {
+        padding: 20px;
+        margin: 20px;
+    }
+
+    .signature-canvas {
+        width: 400px !important;
+        height: 150px !important;
+    }
+}
+
+@media screen and (max-width: 992px) {
+    .signature-canvas {
+        width: 300px !important;
+        height: 120px !important;
+    }
+}
+
+@media screen and (max-width: 768px) {
+    .vale-signatures-container {
+        flex-direction: column;
+        gap: 30px;
+    }
+
+    .vale-signature-group {
+        width: 100%;
+    }
+
+    .signature-canvas {
+        width: 100% !important;
+        height: 200px !important;
+    }
+
+    .vale-number-group {
+        flex-direction: column;
+        gap: 20px;
+    }
+
+    .vale-column {
+        width: 100%;
+    }
+
+    .vale-container {
+        padding: 15px;
+        margin: 10px;
+    }
+
+    .vale-title {
+        font-size: 20px;
+    }
+
+    .vale-form-group label {
+        font-size: 14px;
+    }
+
+    input[type="text"],
+    input[type="date"],
+    input[type="number"] {
+        padding: 10px;
+        font-size: 14px;
+    }
+}
+
+@media screen and (max-width: 480px) {
+    .vale-container {
+        padding: 10px;
+        margin: 5px;
+    }
+
+    .signature-canvas {
+        height: 150px !important;
+    }
+
+    .vale-signature-group h3 {
+        font-size: 16px;
+    }
+
+    .vale-signature-group button {
+        width: 100%;
+        padding: 10px;
+    }
+
+    .vale-title {
+        font-size: 18px;
+    }
 }

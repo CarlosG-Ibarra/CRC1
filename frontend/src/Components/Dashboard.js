@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { Link } from "react-router-dom";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
@@ -22,7 +22,9 @@ import "./Dashboard.css";
 const Dashboard = () => {
   const [weatherData, setWeatherData] = useState(null);
   const [date, setDate] = useState(new Date());
-  const [despensas, setDespensas] = useState([]);
+  const [despensas, setDespensas] = useState([]);  // Initialize as empty array instead of null
+  const [scrollDirection, setScrollDirection] = useState('down');
+  const despensasListRef = useRef(null);
 
   // Fetch the logged-in user's info from localStorage
   const user = JSON.parse(localStorage.getItem("user"));
@@ -57,28 +59,48 @@ const Dashboard = () => {
         }
         const data = await response.json();
         console.log("Datos de despensas:", data);
-        setDespensas(data.despensas);
+        setDespensas(data);
       } catch (error) {
         console.error("Error al obtener despensas:", error);
+        setDespensas([]);
       }
     };
     fetchDespensas();
   }, []);
 
-  const getWeatherIcon = (weathercode) => {
-    switch (true) {
-      case weathercode === 0:
-        return faSun;
-      case weathercode === 1:
-        return faCloud;
-      case weathercode === 61:
-        return faCloudRain;
-      case weathercode === 71:
-        return faSnowflake;
-      default:
-        return faCloud;
+  useEffect(() => {
+    let scrollInterval;
+    
+    if (despensas && despensas.length > 5) {
+      scrollInterval = setInterval(() => {
+        if (despensasListRef.current) {
+          const { scrollTop, scrollHeight, clientHeight } = despensasListRef.current;
+          
+          if (scrollDirection === 'down') {
+            if (scrollTop + clientHeight >= scrollHeight) {
+              // Reached bottom, change direction
+              setScrollDirection('up');
+            } else {
+              despensasListRef.current.scrollBy({ top: 1, behavior: 'smooth' });
+            }
+          } else {
+            if (scrollTop <= 0) {
+              // Reached top, change direction
+              setScrollDirection('down');
+            } else {
+              despensasListRef.current.scrollBy({ top: -1, behavior: 'smooth' });
+            }
+          }
+        }
+      }, 50);
     }
-  };
+
+    return () => {
+      if (scrollInterval) {
+        clearInterval(scrollInterval);
+      }
+    };
+  }, [despensas, scrollDirection]);
 
   return (
     <div className="dashboard-content">
@@ -135,31 +157,33 @@ const Dashboard = () => {
       </div>
 
       <div className="info-boxes">
-        <div className="info-box-w">
+        <div className="weather-box">
           <h3>Clima</h3>
-          {weatherData ? (
+          {weatherData && (
             <>
               <FontAwesomeIcon
-                icon={getWeatherIcon(weatherData.weathercode)}
+                icon={
+                  weatherData.weathercode === 0
+                    ? faSun
+                    : weatherData.weathercode <= 3
+                    ? faCloud
+                    : weatherData.weathercode <= 69
+                    ? faCloudRain
+                    : faSnowflake
+                }
                 className="weather-icon"
               />
-              <p className="weather-temp">{weatherData.temperature}°C</p>
-              <p className="weather-description">
+              <span className="weather-temp">{weatherData.temperature}°C</span>
+              <span className="weather-description">
                 {weatherData.weathercode === 0
                   ? "Despejado"
-                  : weatherData.weathercode === 1
-                  ? "Principalmente despejado"
-                  : weatherData.weathercode === 2
-                  ? "Parcialmente nublado"
-                  : weatherData.weathercode === 3
-                  ? "Nublado"
-                  : weatherData.weathercode === 61
-                  ? "Lluvia ligera"
-                  : "Condiciones desconocidas"}
-              </p>
+                  : weatherData.weathercode <= 3
+                  ? "Parcialmente Nublado"
+                  : weatherData.weathercode <= 69
+                  ? "Lluvioso"
+                  : "Nevado"}
+              </span>
             </>
-          ) : (
-            <p>Cargando el clima...</p>
           )}
         </div>
 
@@ -173,7 +197,22 @@ const Dashboard = () => {
           {despensas.length === 0 ? (
             <p>No hay despensas para hoy.</p>
           ) : (
-            <ul className="despensa-list">
+            <ul 
+              className="despensa-list"
+              ref={despensasListRef}
+              onMouseEnter={() => {
+                if (despensasListRef.current) {
+                  despensasListRef.current.style.scrollBehavior = 'auto';
+                  despensasListRef.current.style.overflowY = 'auto';
+                }
+              }}
+              onMouseLeave={() => {
+                if (despensasListRef.current) {
+                  despensasListRef.current.style.scrollBehavior = 'smooth';
+                  despensasListRef.current.style.overflowY = 'hidden';
+                }
+              }}
+            >
               {despensas.map((despensa, index) => (
                 <li key={index} className="despensa-item">
                   <div className="despensa-icon">

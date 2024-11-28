@@ -39,28 +39,28 @@ function Vales() {
 
   const handleSalidaSubmit = async (e) => {
     e.preventDefault();
-  
+
     if (signatureRefEntrega.current.isEmpty()) {
       setErrorMessage("La firma de quien entrega es obligatoria.");
       return;
     }
-  
+
     if (signatureRefRecibe.current.isEmpty()) {
       setErrorMessage("La firma de quien recibe es obligatoria.");
       return;
     }
-  
+
     setErrorMessage("");
     setLoading(true);
-  
+
     // Convertir las firmas a archivos
     const signatureFileEntrega = signatureRefEntrega.current.toDataURL("image/png");
     const signatureFileRecibe = signatureRefRecibe.current.toDataURL("image/png");
-  
+
     // Crear un archivo Blob a partir del Base64
     const blobEntrega = dataURLToBlob(signatureFileEntrega);
     const blobRecibe = dataURLToBlob(signatureFileRecibe);
-  
+
     // Crear el FormData
     const formDataToSend = new FormData();
     formDataToSend.append('Fecha', formData.Fecha);
@@ -82,13 +82,13 @@ function Vales() {
     formDataToSend.append('Juguetes', formData.Juguetes);
     formDataToSend.append('Firma1', blobEntrega, 'firma1.png');
     formDataToSend.append('Firma2', blobRecibe, 'firma2.png');
-  
+
     try {
       const response = await fetch("http://localhost:3001/registro_vales", {
         method: "POST",
         body: formDataToSend,
       });
-  
+
       if (response.ok) {
         console.log("Registro exitoso");
         alert("El vale de salida se generó correctamente.");
@@ -113,11 +113,11 @@ function Vales() {
     const mimeString = dataURL.split(',')[0].split(':')[1].split(';')[0];
     const arrayBuffer = new ArrayBuffer(byteString.length);
     const uintArray = new Uint8Array(arrayBuffer);
-  
+
     for (let i = 0; i < byteString.length; i++) {
       uintArray[i] = byteString.charCodeAt(i);
     }
-  
+
     return new Blob([arrayBuffer], { type: mimeString });
   };
 
@@ -138,7 +138,7 @@ function Vales() {
       Mesas: "",
       Sillas: "",
       Dulces: "",
-      Piñatas: "",
+      Pinatas: "",
       Juguetes: "",
     });
   };
@@ -329,36 +329,38 @@ function Vales() {
           </div>
         </div>
 
-        <div className="vale-signature-group">
-          <h3>Firma de quien entrega</h3>
-          <SignatureCanvas
-            ref={signatureRefEntrega}
-            penColor="black"
-            canvasProps={{
-              width: 500,
-              height: 200,
-              className: "signature-canvas",
-            }}
-          />
-          <button type="button" onClick={clearSignatureEntrega}>
-            Limpiar Firma
-          </button>
-        </div>
+        <div className="vale-signatures-container">
+          <div className="vale-signature-group">
+            <h3>Firma de quien entrega</h3>
+            <SignatureCanvas
+              ref={signatureRefEntrega}
+              penColor="black"
+              canvasProps={{
+                width: 500,
+                height: 200,
+                className: "signature-canvas",
+              }}
+            />
+            <button type="button" onClick={clearSignatureEntrega}>
+              Limpiar Firma
+            </button>
+          </div>
 
-        <div className="vale-signature-group">
-          <h3>Firma de quien recibe</h3>
-          <SignatureCanvas
-            ref={signatureRefRecibe}
-            penColor="black"
-            canvasProps={{
-              width: 500,
-              height: 200,
-              className: "signature-canvas",
-            }}
-          />
-          <button type="button" onClick={clearSignatureRecibe}>
-            Limpiar Firma
-          </button>
+          <div className="vale-signature-group">
+            <h3>Firma de quien recibe</h3>
+            <SignatureCanvas
+              ref={signatureRefRecibe}
+              penColor="black"
+              canvasProps={{
+                width: 500,
+                height: 200,
+                className: "signature-canvas",
+              }}
+            />
+            <button type="button" onClick={clearSignatureRecibe}>
+              Limpiar Firma
+            </button>
+          </div>
         </div>
 
         <button type="submit" disabled={loading}>

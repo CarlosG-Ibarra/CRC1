@@ -187,72 +187,133 @@ app.post("/api/estudio-socioeconomico", (req, res) => {
   });
 });
 
-
-
-
-
-
-
-app.get("/api/check-delivery", (req, res) => {
-  const { nombre } = req.query;
-  console.log("Received nombre from frontend:", nombre); // Log the received value
-
-  const query =
-    "SELECT * FROM estudio_socioeconomico WHERE nombre_solicitante LIKE ?";
-  DB.query(query, [`%${nombre}%`], (err, result) => {
+// Obtener despensas con ruta = 0
+app.get("/despensas/sin-ruta", (req, res) => {
+  const query = `
+    SELECT 
+      id_despensa,
+      nombre_solicitante,
+      calle,
+      numero,
+      colonia,
+      zona,
+      ruta
+    FROM estudio_socioeconomico 
+    WHERE ruta = 0 OR ruta IS NULL
+  `;
+  
+  DB.query(query, (err, results) => {
     if (err) {
-      console.error(err);
-      return res.status(500).send("Database error");
+      console.error("Error al obtener las despensas:", err);
+      return res.status(500).json({ 
+        message: "Error al obtener despensas sin ruta", 
+        error: err 
+      });
     }
-    res.json(result);
+    res.json(results);
   });
 });
 
-// Ruta para guardar el formulario y la firma
-app.post("/api/submit-form", (req, res) => {
-  const { nombreSolicitante, firmaFilename, signatureDataURL, ...otherData } =
-    req.body;
-
-  if (signatureDataURL) {
-    // Remove the base64 URL prefix
-    const base64Data = signatureDataURL.replace(/^data:image\/png;base64,/, "");
-    const filePath = path.join(__dirname, "firmas", firmaFilename);
-
-    // Ensure the firmas directory exists
-    fs.mkdirSync(path.join(__dirname, "firmas"), { recursive: true });
-
-    // Save the image file
-    fs.writeFile(filePath, base64Data, "base64", (err) => {
-      if (err) {
-        console.error("Error saving signature:", err);
-        return res.status(500).json({ error: "Failed to save signature" });
-      }
-
-      // Prepare SQL data to save to MySQL
-      const sql = "INSERT INTO estudio_socioeconomico SET ?";
-      const formData = {
-        ...otherData,
-        nombreSolicitante,
-        firma: firmaFilename,
-      };
-
-      // Insert form data into MySQL
-      DB.query(sql, formData, (err, result) => {
-        if (err) {
-          console.error("Error saving to database:", err);
-          return res.status(500).json({ error: "Failed to save form data" });
-        }
-
-        res
-          .status(200)
-          .json({ message: "Form and signature saved successfully" });
-      });
-    });
-  } else {
-    res.status(400).json({ error: "No signature provided" });
-  }
+// Actualizar la ruta de una despensa
+app.post("/despensa/actualizar-ruta", (req, res) => {
+  const { id_despensa, ruta } = req.body; // Get both the ID and the new route value
+  
+  const query = "UPDATE estudio_socioeconomico SET ruta = ? WHERE id_despensa = ?";
+  
+  DB.query(query, [ruta, id_despensa], (err, results) => {
+    if (err) {
+      console.error("Error al actualizar la despensa:", err);
+      return res.status(500).json({ message: "Error en el servidor." });
+    }
+    res.status(200).json({ message: "Ruta actualizada correctamente." });
+  });
 });
 
+//VALE DE SALIDA
+app.post("/registro_vales", (req, res) => {
+  const {
+    Fecha,
+    Solicitante,
+    Dependencia,
+    Despensas,
+    MochilaPrimaria,
+    MochilasSecundaria,
+    MochilasPreparatoria,
+    Colchonetas,
+    Aguas,
+    Pintura,
+    Impermeabilizante,
+    Bicicletas,
+    Mesas,
+    Sillas,
+    Dulces,
+    Piñatas,
+    Juguetes,
+    Firma1,
+    Firma2,
+  } = req.body;
+  const SQL_QUERY =
+    "INSERT INTO registro_vales (fecha_entrega, solicitante, dependencia, cantidad_despensas, cantidad_mochilas_primaria, cantidad_mochilas_secundaria, cantidad_mochilas_preparatoria, cantidad_colchonetas, cantidad_aguas, cantidad_botes_pintura,cantidad_botes_impermeabilizante, cantidad_bicicletas, cantidad_mesas, cantidad_sillas, cantidad_dulces, cantidad_piñatas,cantidad_juguetes, firma_entrega, firma_recibe) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+
+  DB.query(
+    SQL_QUERY,
+    [
+      Fecha,
+      Solicitante,
+      Dependencia,
+      Despensas,
+      MochilaPrimaria,
+      MochilasSecundaria,
+      MochilasPreparatoria,
+      Colchonetas,
+      Aguas,
+      Pintura,
+      Impermeabilizante,
+      Bicicletas,
+      Mesas,
+      Sillas,
+      Dulces,
+      Piñatas,
+      Juguetes,
+      Firma1,
+      Firma2,
+    ],
+    (err, result) => {
+      if (err) {
+        throw err;
+      }
+      res.json(result);
+    }
+  );
+});
+
+//Busqueda de vales
+app.get("/registro_vales", (req, res) => {
+  const { term } = req.query; // Obtener el término de búsqueda desde la consulta
+
+  const SQL_QUERY = `
+        SELECT * FROM registro_vales 
+        WHERE LOWER(fecha_entrega) LIKE ? OR 
+              LOWER(dependencia) LIKE ? OR 
+              LOWER(solicitante) LIKE ?
+    `;
+
+  const searchTerm = `%${term.toLowerCase()}%`; // Preparar el término con comodines y en minúsculas
+
+  // Realizar la consulta a la base de datos
+  DB.query(SQL_QUERY, [searchTerm, searchTerm, searchTerm], (err, results) => {
+    if (err) {
+      console.error("Error al buscar los vales:", err);
+      return res.status(500).json({ error: "Error al buscar los vales" });
+    }
+
+    if (results.length === 0) {
+      return res.status(404).json({ message: "No se encontraron resultados." });
+    }
+
+    res.status(200).json(results); // Enviar los resultados como respuesta
+  });
+});
 
 // User registration route
 app.post("/register", (req, res) => {
@@ -366,118 +427,63 @@ app.delete("/usuarios/:id", (req, res) => {
   });
 });
 
-// Obtener despensas con ruta = 0
-app.get("/despensas/sin-ruta", (req, res) => {
-  const query = "SELECT * FROM estudio_socioeconomico WHERE ruta = 0";
-  DB.query(query, (err, results) => {
-    if (err) {
-      console.error("Error al obtener las despensas:", err);
-      return res.status(500).json({ message: "Error en el servidor." });
-    }
-    res.status(200).json({ despensas: results });
-  });
-});
+// Ruta para guardar el formulario y la firma
+app.post("/api/submit-form", (req, res) => {
+  const { nombreSolicitante, firmaFilename, signatureDataURL, ...otherData } =
+    req.body;
 
-// Actualizar la ruta de una despensa (ruta = 1)
-app.post("/despensa/actualizar-ruta", (req, res) => {
-  const { id_despensa } = req.body; // The despensa ID passed from the client
-  
-  const query = "UPDATE estudio_socioeconomico SET ruta = 1 WHERE id_despensa = ?";
-  
-  DB.query(query, [id_despensa], (err, results) => {
-    if (err) {
-      console.error("Error al actualizar la despensa:", err);
-      return res.status(500).json({ message: "Error en el servidor." });
-    }
-    res.status(200).json({ message: "Ruta actualizada correctamente." });
-  });
-});
+  if (signatureDataURL) {
+    // Remove the base64 URL prefix
+    const base64Data = signatureDataURL.replace(/^data:image\/png;base64,/, "");
+    const filePath = path.join(__dirname, "firmas", firmaFilename);
 
+    // Ensure the firmas directory exists
+    fs.mkdirSync(path.join(__dirname, "firmas"), { recursive: true });
 
-//VALE DE SALIDA
-app.post("/registro_vales", (req, res) => {
-  const {
-    Fecha,
-    Solicitante,
-    Dependencia,
-    Despensas,
-    MochilaPrimaria,
-    MochilasSecundaria,
-    MochilasPreparatoria,
-    Colchonetas,
-    Aguas,
-    Pintura,
-    Impermeabilizante,
-    Bicicletas,
-    Mesas,
-    Sillas,
-    Dulces,
-    Piñatas,
-    Juguetes,
-    Firma1,
-    Firma2,
-  } = req.body;
-  const SQL_QUERY =
-    "INSERT INTO registro_vales (fecha_entrega, solicitante, dependencia, cantidad_despensas, cantidad_mochilas_primaria, cantidad_mochilas_secundaria, cantidad_mochilas_preparatoria, cantidad_colchonetas, cantidad_aguas, cantidad_botes_pintura,cantidad_botes_impermeabilizante, cantidad_bicicletas, cantidad_mesas, cantidad_sillas, cantidad_dulces, cantidad_piñatas,cantidad_juguetes, firma_entrega, firma_recibe) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
-
-  DB.query(
-    SQL_QUERY,
-    [
-      Fecha,
-      Solicitante,
-      Dependencia,
-      Despensas,
-      MochilaPrimaria,
-      MochilasSecundaria,
-      MochilasPreparatoria,
-      Colchonetas,
-      Aguas,
-      Pintura,
-      Impermeabilizante,
-      Bicicletas,
-      Mesas,
-      Sillas,
-      Dulces,
-      Piñatas,
-      Juguetes,
-      Firma1,
-      Firma2,
-    ],
-    (err, result) => {
+    // Save the image file
+    fs.writeFile(filePath, base64Data, "base64", (err) => {
       if (err) {
-        throw err;
+        console.error("Error saving signature:", err);
+        return res.status(500).json({ error: "Failed to save signature" });
       }
-      res.json(result);
-    }
-  );
+
+      // Prepare SQL data to save to MySQL
+      const sql = "INSERT INTO estudio_socioeconomico SET ?";
+      const formData = {
+        ...otherData,
+        nombreSolicitante,
+        firma: firmaFilename,
+      };
+
+      // Insert form data into MySQL
+      DB.query(sql, formData, (err, result) => {
+        if (err) {
+          console.error("Error saving to database:", err);
+          return res.status(500).json({ error: "Failed to save form data" });
+        }
+
+        res
+          .status(200)
+          .json({ message: "Form and signature saved successfully" });
+      });
+    });
+  } else {
+    res.status(400).json({ error: "No signature provided" });
+  }
 });
 
-//Busqueda de vales
-app.get("/registro_vales", (req, res) => {
-  const { term } = req.query; // Obtener el término de búsqueda desde la consulta
+// Get all delivery records
+app.get("/api/check-delivery", (req, res) => {
+  const { nombre } = req.query;
+  console.log("Received nombre from frontend:", nombre); // Log the received value
 
-  const SQL_QUERY = `
-        SELECT * FROM registro_vales 
-        WHERE LOWER(fecha_entrega) LIKE ? OR 
-              LOWER(dependencia) LIKE ? OR 
-              LOWER(solicitante) LIKE ?
-    `;
-
-  const searchTerm = `%${term.toLowerCase()}%`; // Preparar el término con comodines y en minúsculas
-
-  // Realizar la consulta a la base de datos
-  DB.query(SQL_QUERY, [searchTerm, searchTerm, searchTerm], (err, results) => {
+  const query =
+    "SELECT * FROM estudio_socioeconomico WHERE nombre_solicitante LIKE ?";
+  DB.query(query, [`%${nombre}%`], (err, result) => {
     if (err) {
-      console.error("Error al buscar los vales:", err);
-      return res.status(500).json({ error: "Error al buscar los vales" });
+      console.error(err);
+      return res.status(500).send("Database error");
     }
-
-    if (results.length === 0) {
-      return res.status(404).json({ message: "No se encontraron resultados." });
-    }
-
-    res.status(200).json(results); // Enviar los resultados como respuesta
+    res.json(result);
   });
 });
-
-
