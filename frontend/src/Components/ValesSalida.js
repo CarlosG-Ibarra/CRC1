@@ -9,6 +9,7 @@ function Vales() {
   const [formData, setFormData] = useState({
     Fecha: "",
     Solicitante: "",
+    Recipiente: "",
     Dependencia: "",
     Despensas: "",
     MochilaPrimaria: "",
@@ -53,78 +54,49 @@ function Vales() {
     setErrorMessage("");
     setLoading(true);
 
-    // Convertir las firmas a archivos
-    const signatureFileEntrega = signatureRefEntrega.current.toDataURL("image/png");
-    const signatureFileRecibe = signatureRefRecibe.current.toDataURL("image/png");
-
-    // Crear un archivo Blob a partir del Base64
-    const blobEntrega = dataURLToBlob(signatureFileEntrega);
-    const blobRecibe = dataURLToBlob(signatureFileRecibe);
-
-    // Crear el FormData
-    const formDataToSend = new FormData();
-    formDataToSend.append('Fecha', formData.Fecha);
-    formDataToSend.append('Solicitante', formData.Solicitante);
-    formDataToSend.append('Dependencia', formData.Dependencia);
-    formDataToSend.append('Despensas', formData.Despensas);
-    formDataToSend.append('MochilaPrimaria', formData.MochilaPrimaria);
-    formDataToSend.append('MochilasSecundaria', formData.MochilasSecundaria);
-    formDataToSend.append('MochilasPreparatoria', formData.MochilasPreparatoria);
-    formDataToSend.append('Colchonetas', formData.Colchonetas);
-    formDataToSend.append('Aguas', formData.Aguas);
-    formDataToSend.append('Pintura', formData.Pintura);
-    formDataToSend.append('Impermeabilizante', formData.Impermeabilizante);
-    formDataToSend.append('Bicicletas', formData.Bicicletas);
-    formDataToSend.append('Mesas', formData.Mesas);
-    formDataToSend.append('Sillas', formData.Sillas);
-    formDataToSend.append('Dulces', formData.Dulces);
-    formDataToSend.append('Pinatas', formData.Pinatas);
-    formDataToSend.append('Juguetes', formData.Juguetes);
-    formDataToSend.append('Firma1', blobEntrega, 'firma1.png');
-    formDataToSend.append('Firma2', blobRecibe, 'firma2.png');
-
     try {
+      // Get the signature data
+      const Firma1 = signatureRefEntrega.current.toDataURL();
+      const Firma2 = signatureRefRecibe.current.toDataURL();
+
+      const requestData = {
+        ...formData,
+        tipo: "salida",  // Changed to lowercase to match ENUM value
+        Firma1,
+        Firma2
+      };
+
       const response = await fetch("http://localhost:3001/registro_vales", {
         method: "POST",
-        body: formDataToSend,
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(requestData),
       });
 
-      if (response.ok) {
-        console.log("Registro exitoso");
-        alert("El vale de salida se generó correctamente.");
-        // Limpiar formulario y firmas
-        resetForm();
-        signatureRefEntrega.current.clear();
-        signatureRefRecibe.current.clear();
-      } else {
+      if (!response.ok) {
         const errorData = await response.json();
-        setErrorMessage(errorData.error || "Error en el registro.");
+        throw new Error(errorData.error || "Error al registrar el vale");
       }
+
+      const data = await response.json();
+      alert("Vale de salida registrado exitosamente");
+      resetForm();
+      signatureRefEntrega.current.clear();
+      signatureRefRecibe.current.clear();
     } catch (error) {
-      setErrorMessage("Error al conectar con el servidor: " + error.message);
+      console.error("Error:", error);
+      setErrorMessage(error.message);
     } finally {
       setLoading(false);
     }
-  };
-
-  // Función para convertir Base64 a Blob
-  const dataURLToBlob = (dataURL) => {
-    const byteString = atob(dataURL.split(',')[1]);
-    const mimeString = dataURL.split(',')[0].split(':')[1].split(';')[0];
-    const arrayBuffer = new ArrayBuffer(byteString.length);
-    const uintArray = new Uint8Array(arrayBuffer);
-
-    for (let i = 0; i < byteString.length; i++) {
-      uintArray[i] = byteString.charCodeAt(i);
-    }
-
-    return new Blob([arrayBuffer], { type: mimeString });
   };
 
   const resetForm = () => {
     setFormData({
       Fecha: "",
       Solicitante: "",
+      Recipiente: "",
       Dependencia: "",
       Despensas: "",
       MochilaPrimaria: "",
@@ -168,27 +140,37 @@ function Vales() {
         </div>
 
         <div className="vale-form-group">
-          <label htmlFor="dependencia-solicitante">Solicitante:</label>
+          <label htmlFor="solicitante">Solicitante:</label>
           <input
             type="text"
-            id="dependencia-solicitante"
+            id="solicitante"
             name="Solicitante"
             value={formData.Solicitante}
             onChange={handleChange}
-            placeholder="Solicitante"
             required
           />
         </div>
 
         <div className="vale-form-group">
-          <label htmlFor="dependencia-salida">Dependencia:</label>
+          <label htmlFor="recipiente">Nombre de quien recibe:</label>
           <input
             type="text"
-            id="dependencia-salida"
+            id="recipiente"
+            name="Recipiente"
+            value={formData.Recipiente}
+            onChange={handleChange}
+            required
+          />
+        </div>
+
+        <div className="vale-form-group">
+          <label htmlFor="dependencia">Dependencia:</label>
+          <input
+            type="text"
+            id="dependencia"
             name="Dependencia"
             value={formData.Dependencia}
             onChange={handleChange}
-            placeholder="Ingrese la dependencia"
             required
           />
         </div>
@@ -331,7 +313,7 @@ function Vales() {
 
         <div className="vale-signatures-container">
           <div className="vale-signature-group">
-            <h3>Firma de quien entrega</h3>
+            <h3>Firma de {formData.Solicitante || 'quien entrega'}</h3>
             <SignatureCanvas
               ref={signatureRefEntrega}
               penColor="black"
@@ -347,7 +329,7 @@ function Vales() {
           </div>
 
           <div className="vale-signature-group">
-            <h3>Firma de quien recibe</h3>
+            <h3>Firma de {formData.Recipiente || 'quien recibe'}</h3>
             <SignatureCanvas
               ref={signatureRefRecibe}
               penColor="black"

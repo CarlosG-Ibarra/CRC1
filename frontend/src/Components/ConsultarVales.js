@@ -12,89 +12,116 @@ const formatFecha = (fecha) => {
   });
 };
 
-function BuscadorVales() {
+function ConsultarVales() {
   const [searchTerm, setSearchTerm] = useState('');
-  const [filteredVales, setFilteredVales] = useState([]);
-  const [selectedVale, setSelectedVale] = useState(null); // Almacena el vale seleccionado
-  const [loading, setLoading] = useState(false); // Estado de carga
-  const [error, setError] = useState(null); // Estado para manejar errores
+  const [dateFilter, setDateFilter] = useState('');
+  const [vales, setVales] = useState([]);
+  const [selectedVale, setSelectedVale] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
 
+  // Fetch vales when component mounts or search terms change
   useEffect(() => {
-    let isMounted = true; // Bandera para indicar si el componente está montado
-    if (searchTerm === '') return; // Evita la llamada si no hay término de búsqueda
-  
     const fetchVales = async () => {
       setLoading(true);
       setError(null);
-  
       try {
-        const response = await axios.get(`http://localhost:3001/registro_vales?term=${searchTerm}`);
-  
-        if (response.status === 200 && isMounted) {
+        // Combine text search and date filter
+        const searchParams = new URLSearchParams();
+        if (searchTerm) searchParams.append('term', searchTerm);
+        if (dateFilter) searchParams.append('date', dateFilter);
+        
+        const url = `http://localhost:3001/registro_vales?${searchParams.toString()}`;
+        
+        const response = await axios.get(url);
+        
+        if (response.status === 200) {
           const data = response.data;
           const updatedData = data.map(vale => {
             if (vale.firma_entrega) {
               vale.firma_entrega = `data:image/png;base64,${vale.firma_entrega}`;
             }
             if (vale.firma_recibe) {
-              vale.firma_recibe = `data:image/png;base64,${vale.firma_entrega}`;
+              vale.firma_recibe = `data:image/png;base64,${vale.firma_recibe}`;
             }
             return vale;
           });
-  
-          if (isMounted) {
-            setFilteredVales(updatedData);
-          }
+          setVales(updatedData);
         }
       } catch (error) {
-        if (isMounted) {
-          setError('Error al buscar los vales. Intente nuevamente más tarde.');
-        }
+        setError('Error al obtener los vales. Intente nuevamente más tarde.');
       } finally {
-        if (isMounted) setLoading(false);
+        setLoading(false);
       }
     };
-  
-    fetchVales();
-  
-    return () => {
-      isMounted = false; // Marca el componente como desmontado
-    };
-  }, [searchTerm]);
+
+    // Add debounce to prevent too many API calls
+    const timeoutId = setTimeout(() => {
+      fetchVales();
+    }, 300);
+
+    return () => clearTimeout(timeoutId);
+  }, [searchTerm, dateFilter]);
 
   const handleSearchChange = (event) => {
     setSearchTerm(event.target.value);
   };
 
+  const handleDateChange = (event) => {
+    setDateFilter(event.target.value);
+  };
+
   const handleValeClick = (vale) => {
-    setSelectedVale(vale); // Almacena el vale seleccionado
+    setSelectedVale(vale);
   };
 
   const handleBack = () => {
-    setSelectedVale(null); // Vuelve a la lista de vales
+    setSelectedVale(null);
+  };
+
+  const clearFilters = () => {
+    setSearchTerm('');
+    setDateFilter('');
   };
 
   return (
     <div className="buscador-vales-container">
-      <h1 className="buscador-vales-title">Buscar Vales</h1>
-      <input
-        type="text"
-        placeholder="Buscar por fecha, dependencia o solicitante..."
-        value={searchTerm}
-        onChange={handleSearchChange}
-        className="buscador-vales-input"
-        maxLength="100" // Limitar el tamaño del término de búsqueda
-      />
+      <h1 className="buscador-vales-title">Consultar Vales</h1>
+      
+      <div className="search-container">
+        <div className="search-inputs">
+          <input
+            type="text"
+            placeholder="Buscar por tipo, solicitante o dependencia..."
+            value={searchTerm}
+            onChange={handleSearchChange}
+            className="filter-input search-text"
+          />
+          <input
+            type="date"
+            value={dateFilter}
+            onChange={handleDateChange}
+            className="filter-input search-date"
+          />
+          <button 
+            onClick={clearFilters}
+            className="filter-input clear-button"
+          >
+            Limpiar
+          </button>
+        </div>
+      </div>
 
-      {loading && <p>Cargando...</p>} {/* Mensaje de carga */}
-
-      {error && <p className="error-message">{error}</p>} {/* Mensaje de error */}
+      {loading && <p>Cargando...</p>}
+      {error && <p className="error-message">{error}</p>}
 
       {selectedVale ? (
         <div className="vale-detalle">
           <h2>Detalle del Vale</h2>
           <p><strong>Fecha:</strong> {formatFecha(selectedVale.fecha_entrega)}</p>
+          <p><strong>Tipo:</strong> {selectedVale.tipo.charAt(0).toUpperCase() + selectedVale.tipo.slice(1)}</p>
           <p><strong>Solicitante:</strong> {selectedVale.solicitante}</p>
+          <p><strong>Recipiente:</strong> {selectedVale.recipiente}</p>
           <p><strong>Dependencia:</strong> {selectedVale.dependencia}</p>
           <p><strong>Despensas:</strong> {selectedVale.cantidad_despensas}</p>
           <p><strong>Mochilas Primaria:</strong> {selectedVale.cantidad_mochilas_primaria}</p>
@@ -110,42 +137,49 @@ function BuscadorVales() {
           <p><strong>Dulces:</strong> {selectedVale.cantidad_dulces}</p>
           <p><strong>Piñatas:</strong> {selectedVale.cantidad_piñatas}</p>
           <p><strong>Juguetes:</strong> {selectedVale.cantidad_juguetes}</p>
-          {/* Otras propiedades del vale... */}
           
-          {/* Mostrar las firmas como imágenes */}
-          <div>
-            <p><strong>Firma de quien entrega:</strong></p>
-            {selectedVale.firma_entrega && (
-              <img 
-                src={selectedVale.firma_entrega} 
-                alt="Firma entrega" 
-                style={{ width: '300px', height: 'auto', border: '1px solid black', marginTop: '10px' }} 
-              />
-            )}
-          </div>
-          <div>
-            <p><strong>Firma de quien recibe:</strong></p>
-            {selectedVale.firma_recibe && (
-              <img 
-                src={selectedVale.firma_recibe} 
-                alt="Firma recibe" 
-                style={{ width: '300px', height: 'auto', border: '1px solid black', marginTop: '10px' }} 
-              />
-            )}
+          <div className="firmas-container">
+            <div className="firma">
+              <p><strong>Firma de quien entrega:</strong></p>
+              {selectedVale.firma_entrega && (
+                <img 
+                  src={`http://localhost:3001/FirmasVales/${selectedVale.firma_entrega.replace('data:image/png;base64,', '')}`}
+                  alt="Firma entrega" 
+                  className="firma-imagen"
+                  onError={(e) => {
+                    e.target.onerror = null;
+                  }}
+                />
+              )}
+            </div>
+            <div className="firma">
+              <p><strong>Firma de quien recibe:</strong></p>
+              {selectedVale.firma_recibe && (
+                <img 
+                  src={`http://localhost:3001/FirmasVales/${selectedVale.firma_recibe.replace('data:image/png;base64,', '')}`}
+                  alt="Firma recibe" 
+                  className="firma-imagen"
+                  onError={(e) => {
+                    e.target.onerror = null;
+                  }}
+                />
+              )}
+            </div>
           </div>
 
           <button onClick={handleBack} className="vale-back-button">Volver</button>
         </div>
       ) : (
         <div className="buscador-vales-list">
-          {filteredVales.length > 0 ? (
-            filteredVales.map((vale) => (
+          {vales.length > 0 ? (
+            vales.map((vale) => (
               <div
                 key={vale.id}
                 className="buscador-vales-item"
-                onClick={() => handleValeClick(vale)} // Maneja el clic en un vale
+                onClick={() => handleValeClick(vale)}
               >
                 <p><strong>Fecha:</strong> {formatFecha(vale.fecha_entrega)}</p>
+                <p><strong>Tipo:</strong> {vale.tipo.charAt(0).toUpperCase() + vale.tipo.slice(1)}</p>
                 <p><strong>Dependencia:</strong> {vale.dependencia}</p>
                 <p><strong>Solicitante:</strong> {vale.solicitante}</p>
               </div>
@@ -159,4 +193,4 @@ function BuscadorVales() {
   );
 }
 
-export default BuscadorVales;
+export default ConsultarVales;

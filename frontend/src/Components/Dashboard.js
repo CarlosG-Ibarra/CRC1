@@ -58,7 +58,6 @@ const Dashboard = () => {
           throw new Error("Error al obtener despensas");
         }
         const data = await response.json();
-        console.log("Datos de despensas:", data);
         setDespensas(data);
       } catch (error) {
         console.error("Error al obtener despensas:", error);

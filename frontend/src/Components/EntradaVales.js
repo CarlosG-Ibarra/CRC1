@@ -1,10 +1,12 @@
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import "./ValesSalida.css"; // Asegúrate de que esta ruta sea correcta
+import SignatureCanvas from "react-signature-canvas";
 
-function Vales() {
+function EntradaVales() {
   const [formData, setFormData] = useState({
     Fecha: "",
     Solicitante: "",
+    Recipiente: "",
     Dependencia: "",
     Despensas: "",
     MochilaPrimaria: "",
@@ -24,6 +26,8 @@ function Vales() {
 
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
+  const signatureRefEntrega = useRef(null);
+  const signatureRefRecibe = useRef(null);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -33,40 +37,77 @@ function Vales() {
     });
   };
 
-  const handleSalidaSubmit = async (e) => {
+  const handleEntradaSubmit = async (e) => {
     e.preventDefault();
+
+    if (signatureRefEntrega.current.isEmpty()) {
+      setErrorMessage("La firma de quien entrega es obligatoria.");
+      return;
+    }
+
+    if (signatureRefRecibe.current.isEmpty()) {
+      setErrorMessage("La firma de quien recibe es obligatoria.");
+      return;
+    }
+
+    if (!formData.Solicitante.trim()) {
+      setErrorMessage("El nombre de quien entrega es obligatorio.");
+      return;
+    }
+
+    if (!formData.Recipiente.trim()) {
+      setErrorMessage("El nombre de quien recibe es obligatorio.");
+      return;
+    }
+
     setErrorMessage("");
     setLoading(true);
-  
+
     try {
-      const response = await fetch("http://localhost:3001/entradavales", {
+      // Get the signature data
+      const Firma1 = signatureRefEntrega.current.toDataURL();
+      const Firma2 = signatureRefRecibe.current.toDataURL();
+
+      const requestData = {
+        ...formData,
+        tipo: "entrada",  // Changed to lowercase to match ENUM value
+        Firma1,
+        Firma2
+      };
+
+      const response = await fetch("http://localhost:3001/registro_vales", {
         method: "POST",
         headers: {
-          "Content-Type": "application/json", // Asegúrate de enviar datos JSON
+          "Content-Type": "application/json",
         },
-        body: JSON.stringify(formData), // Enviando el formulario como JSON
+        body: JSON.stringify(requestData),
       });
-  
+
+      if (!response.ok) {
+        throw new Error("Error en la solicitud de entrada de vales.");
+      }
+
       if (response.ok) {
-        console.log("Registro exitoso");
-        alert("El vale de salida se generó correctamente.");
+        alert("El vale de entrada se generó correctamente.");
         resetForm();
+        signatureRefEntrega.current.clear();
+        signatureRefRecibe.current.clear();
       } else {
         const errorData = await response.json();
         setErrorMessage(errorData.error || "Error en el registro.");
       }
     } catch (error) {
-      setErrorMessage("Error al conectar con el servidor: " + error.message);
+      setErrorMessage(error.message);
     } finally {
       setLoading(false);
     }
   };
-  
 
   const resetForm = () => {
     setFormData({
       Fecha: "",
       Solicitante: "",
+      Recipiente: "",
       Dependencia: "",
       Despensas: "",
       MochilaPrimaria: "",
@@ -85,10 +126,18 @@ function Vales() {
     });
   };
 
+  const clearSignatureEntrega = () => {
+    signatureRefEntrega.current.clear();
+  };
+
+  const clearSignatureRecibe = () => {
+    signatureRefRecibe.current.clear();
+  };
+
   return (
     <div className="vale-container">
       <h1 className="vale-title">Vale de Entrada</h1>
-      <form onSubmit={handleSalidaSubmit}>
+      <form onSubmit={handleEntradaSubmit}>
         <div className="vale-form-group">
           <label htmlFor="fecha-salida">Fecha:</label>
           <input
@@ -96,6 +145,30 @@ function Vales() {
             id="fecha-salida"
             name="Fecha"
             value={formData.Fecha}
+            onChange={handleChange}
+            required
+          />
+        </div>
+
+        <div className="vale-form-group">
+          <label htmlFor="solicitante">Nombre de quien entrega:</label>
+          <input
+            type="text"
+            id="solicitante"
+            name="Solicitante"
+            value={formData.Solicitante}
+            onChange={handleChange}
+            required
+          />
+        </div>
+
+        <div className="vale-form-group">
+          <label htmlFor="recipiente">Nombre de quien recibe:</label>
+          <input
+            type="text"
+            id="recipiente"
+            name="Recipiente"
+            value={formData.Recipiente}
             onChange={handleChange}
             required
           />
@@ -237,14 +310,51 @@ function Vales() {
           </div>
         </div>
 
+        <div className="vale-signatures-container">
+          <div className="vale-signature-group">
+            <h3>Firma de quien entrega ({formData.Solicitante || 'Pendiente'})</h3>
+            <SignatureCanvas
+              ref={signatureRefEntrega}
+              penColor="black"
+              canvasProps={{
+                width: 500,
+                height: 200,
+                className: "signature-canvas",
+              }}
+            />
+            <button type="button" onClick={clearSignatureEntrega}>
+              Limpiar Firma
+            </button>
+          </div>
+
+          <div className="vale-signature-group">
+            <h3>Firma de quien recibe ({formData.Recipiente || 'Pendiente'})</h3>
+            <SignatureCanvas
+              ref={signatureRefRecibe}
+              penColor="black"
+              canvasProps={{
+                width: 500,
+                height: 200,
+                className: "signature-canvas",
+              }}
+            />
+            <button type="button" onClick={clearSignatureRecibe}>
+              Limpiar Firma
+            </button>
+          </div>
+        </div>
+
         <button type="submit" disabled={loading}>
           {loading ? "Generando..." : "Generar Vale de Entrada"}
         </button>
-      </form>
+        <button type="button" onClick={resetForm} className="reset-button">
+          Limpiar
+        </button>
 
-      {errorMessage && <p className="error-message">{errorMessage}</p>}
+        {errorMessage && <p className="error-message">{errorMessage}</p>}
+      </form>
     </div>
   );
 }
 
-export default Vales;
+export default EntradaVales;

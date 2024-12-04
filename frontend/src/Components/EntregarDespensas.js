@@ -141,7 +141,6 @@ const EntregarDespensas = () => {
   const handleNameChange = (event) => {
     const name = event.target.value;
 
-    // Reset the finalized flag and clear the timer when typing
     setIsNameFinalized(false);
     clearTimeout(debounceTimer.current);
 
@@ -150,7 +149,6 @@ const EntregarDespensas = () => {
       nombreSolicitante: name,
     }));
 
-    // Debounce the name input to prevent frequent updates
     debounceTimer.current = setTimeout(() => {
       setDebouncedName(name);
     }, 200);
@@ -159,22 +157,21 @@ const EntregarDespensas = () => {
   useEffect(() => {
     if (debouncedName.length > 2 && !isNameFinalized) {
       setIsLoading(true);
-      console.log("Fetching data for:", debouncedName); // Log the name being searched
+      
 
       fetch(`http://localhost:3001/api/check-delivery?nombre=${debouncedName}`)
         .then((response) => response.json())
         .then((data) => {
-          console.log("Response data:", data); // Log the response data
-          setSuggestions(Array.isArray(data) ? data : []); // Ensure it's always an array
+          setSuggestions(Array.isArray(data) ? data : []);
           setIsLoading(false);
         })
         .catch((error) => {
           console.error("Error fetching names:", error);
-          setSuggestions([]); // Clear suggestions on error
+          setSuggestions([]);
           setIsLoading(false);
         });
     } else {
-      setSuggestions([]); // Clear suggestions if the name is too short or finalized
+      setSuggestions([]);
     }
   }, [debouncedName, isNameFinalized]);
 
@@ -553,7 +550,6 @@ const EntregarDespensas = () => {
                 {/* Suggestions Box */}
                 {Array.isArray(suggestions) && suggestions.length > 0 && (
                   <div className="suggestions-box">
-                    {console.log(suggestions)} {/* Debugging */}
                     {isLoading ? (
                       <p>Loading...</p>
                     ) : suggestions.length === 0 ? (

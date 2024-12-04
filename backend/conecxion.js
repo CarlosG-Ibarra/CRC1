@@ -37,6 +37,17 @@ DB.connect((err) => {
   }
   console.log("Conexión exitosa");
 });
+
+// Create FirmasVales directory if it doesn't exist
+const firmasDir = path.join(__dirname, 'FirmasVales');
+if (!fs.existsSync(firmasDir)){
+    fs.mkdirSync(firmasDir, { recursive: true });
+    console.log('Created FirmasVales directory at:', firmasDir);
+}
+
+// Serve signature files from FirmasVales directory
+app.use('/FirmasVales', express.static(path.join(__dirname, 'FirmasVales')));
+
 // Initialize Multer Storage Configuration
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
@@ -86,7 +97,6 @@ app.post(
         firmaName: req.files.firma ? req.files.firma[0].filename : null,
       };
 
-      console.log("Uploaded Files:", filenames);
       res.json({ message: "Files uploaded successfully", filenames });
     } catch (error) {
       console.error("Error uploading files:", error);
@@ -229,90 +239,78 @@ app.post("/despensa/actualizar-ruta", (req, res) => {
   });
 });
 
-//VALE DE SALIDA
-app.post("/registro_vales", (req, res) => {
-  const {
-    Fecha,
-    Solicitante,
-    Dependencia,
-    Despensas,
-    MochilaPrimaria,
-    MochilasSecundaria,
-    MochilasPreparatoria,
-    Colchonetas,
-    Aguas,
-    Pintura,
-    Impermeabilizante,
-    Bicicletas,
-    Mesas,
-    Sillas,
-    Dulces,
-    Piñatas,
-    Juguetes,
-    Firma1,
-    Firma2,
-  } = req.body;
-  const SQL_QUERY =
-    "INSERT INTO registro_vales (fecha_entrega, solicitante, dependencia, cantidad_despensas, cantidad_mochilas_primaria, cantidad_mochilas_secundaria, cantidad_mochilas_preparatoria, cantidad_colchonetas, cantidad_aguas, cantidad_botes_pintura,cantidad_botes_impermeabilizante, cantidad_bicicletas, cantidad_mesas, cantidad_sillas, cantidad_dulces, cantidad_piñatas,cantidad_juguetes, firma_entrega, firma_recibe) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
-
-  DB.query(
-    SQL_QUERY,
-    [
-      Fecha,
-      Solicitante,
-      Dependencia,
-      Despensas,
-      MochilaPrimaria,
-      MochilasSecundaria,
-      MochilasPreparatoria,
-      Colchonetas,
-      Aguas,
-      Pintura,
-      Impermeabilizante,
-      Bicicletas,
-      Mesas,
-      Sillas,
-      Dulces,
-      Piñatas,
-      Juguetes,
-      Firma1,
-      Firma2,
-    ],
-    (err, result) => {
-      if (err) {
-        throw err;
-      }
-      res.json(result);
-    }
-  );
-});
 
 //Busqueda de vales
 app.get("/registro_vales", (req, res) => {
-  const { term } = req.query; // Obtener el término de búsqueda desde la consulta
+  try {
+    const { term, date } = req.query;
+    let SQL_QUERY = "SELECT * FROM registro_vales";
+    let queryParams = [];
+    let conditions = [];
 
-  const SQL_QUERY = `
-        SELECT * FROM registro_vales 
-        WHERE LOWER(fecha_entrega) LIKE ? OR 
-              LOWER(dependencia) LIKE ? OR 
-              LOWER(solicitante) LIKE ?
-    `;
+    if (term) {
+      const monthMap = {
+        'enero': 1, 'febrero': 2, 'marzo': 3, 'abril': 4,
+        'mayo': 5, 'junio': 6, 'julio': 7, 'agosto': 8,
+        'septiembre': 9, 'octubre': 10, 'noviembre': 11, 'diciembre': 12
+      };
 
-  const searchTerm = `%${term.toLowerCase()}%`; // Preparar el término con comodines y en minúsculas
+      const yearMatch = term.match(/^[0-9]{4}$/);
+      
+      let foundMonth = null;
+      Object.entries(monthMap).forEach(([monthName, monthNum]) => {
+        if (term.toLowerCase().includes(monthName)) {
+          foundMonth = monthNum;
+        }
+      });
 
-  // Realizar la consulta a la base de datos
-  DB.query(SQL_QUERY, [searchTerm, searchTerm, searchTerm], (err, results) => {
-    if (err) {
-      console.error("Error al buscar los vales:", err);
-      return res.status(500).json({ error: "Error al buscar los vales" });
+      if (yearMatch) {
+        conditions.push("YEAR(fecha_entrega) = ?");
+        queryParams.push(term);
+      } else if (foundMonth) {
+        conditions.push("MONTH(fecha_entrega) = ?");
+        queryParams.push(foundMonth);
+      } else {
+        conditions.push("(LOWER(tipo) LIKE LOWER(?) OR LOWER(solicitante) LIKE LOWER(?) OR LOWER(dependencia) LIKE LOWER(?))");
+        const searchTerm = `%${term}%`;
+        queryParams.push(searchTerm, searchTerm, searchTerm);
+      }
     }
 
-    if (results.length === 0) {
-      return res.status(404).json({ message: "No se encontraron resultados." });
+    if (date) {
+      conditions.push("DATE(fecha_entrega) = ?");
+      queryParams.push(date);
     }
 
-    res.status(200).json(results); // Enviar los resultados como respuesta
-  });
+    if (conditions.length > 0) {
+      SQL_QUERY += " WHERE " + conditions.join(" AND ");
+    }
+
+    SQL_QUERY += " ORDER BY fecha_entrega DESC";
+
+    DB.query(SQL_QUERY, queryParams, (err, results) => {
+      if (err) {
+        return res.status(500).json({ error: "Error al obtener los vales" });
+      }
+
+      if (!results || results.length === 0) {
+        return res.status(200).json([]);
+      }
+
+      const processedResults = results.map(vale => ({
+        ...vale,
+        tipo: vale.tipo || 'N/A',
+        fecha_entrega: vale.fecha_entrega || null,
+        solicitante: vale.solicitante || '',
+        dependencia: vale.dependencia || '',
+        recipiente: vale.recipiente || ''
+      }));
+
+      res.status(200).json(processedResults);
+    });
+  } catch (error) {
+    res.status(500).json({ error: "Error interno del servidor" });
+  }
 });
 
 // User registration route
@@ -343,8 +341,7 @@ app.post("/register", (req, res) => {
 // Login endpoint
 app.post("/login", (req, res) => {
   const { email, pass } = req.body;
-  console.log("Login attempt with:", { email, pass }); // Log input data
-
+  
   // Check if user exists
   DB.query(
     "SELECT * FROM usuarios WHERE email = ?",
@@ -356,7 +353,6 @@ app.post("/login", (req, res) => {
       }
 
       if (results.length === 0) {
-        console.log("Usuario no encontrado:", email); // Log if user is not found
         return res.status(401).send({ message: "Usuario no encontrado" });
       }
 
@@ -364,7 +360,6 @@ app.post("/login", (req, res) => {
 
       // Compare plain text password
       if (user.pass !== pass) {
-        console.log("Contraseña incorrecta para el usuario:", email); // Log if password is incorrect
         return res.status(401).send({ message: "Contraseña incorrecta" });
       }
 
@@ -475,8 +470,7 @@ app.post("/api/submit-form", (req, res) => {
 // Get all delivery records
 app.get("/api/check-delivery", (req, res) => {
   const { nombre } = req.query;
-  console.log("Received nombre from frontend:", nombre); // Log the received value
-
+  
   const query =
     "SELECT * FROM estudio_socioeconomico WHERE nombre_solicitante LIKE ?";
   DB.query(query, [`%${nombre}%`], (err, result) => {
@@ -485,5 +479,116 @@ app.get("/api/check-delivery", (req, res) => {
       return res.status(500).send("Database error");
     }
     res.json(result);
+  });
+});
+
+// Endpoint para registrar vales
+app.post("/registro_vales", (req, res) => {
+  const {
+    Fecha,
+    Solicitante,
+    Recipiente,
+    Dependencia,
+    Despensas,
+    MochilaPrimaria,
+    MochilasSecundaria,
+    MochilasPreparatoria,
+    Colchonetas,
+    Aguas,
+    Pintura,
+    Impermeabilizante,
+    Bicicletas,
+    Mesas,
+    Sillas,
+    Dulces,
+    Piñatas,
+    Juguetes,
+    Firma1,
+    Firma2,
+    tipo  
+  } = req.body;
+
+  try {
+    if (!tipo) {
+      throw new Error("tipo is required and must be either 'entrada' or 'salida'");
+    }
+
+    // Format date for filename
+    const dateStr = new Date().toISOString().split('T')[0].replace(/-/g, '');
+    
+    // Create filenames for signatures
+    const firma1FileName = `${Solicitante}_${dateStr}_entrega.png`.replace(/\s+/g, '_');
+    const firma2FileName = `${Recipiente}_${dateStr}_recibe.png`.replace(/\s+/g, '_');
+
+    // Save signature files
+    const firma1Path = path.join(firmasDir, firma1FileName);
+    const firma2Path = path.join(firmasDir, firma2FileName);
+
+    // Save the base64 data as images
+    if (Firma1) {
+      const firma1Data = Buffer.from(Firma1.split(',')[1], 'base64');
+      fs.writeFileSync(firma1Path, firma1Data);
+    }
+    
+    if (Firma2) {
+      const firma2Data = Buffer.from(Firma2.split(',')[1], 'base64');
+      fs.writeFileSync(firma2Path, firma2Data);
+    }
+
+    const SQL_QUERY =
+      "INSERT INTO registro_vales (fecha_entrega, solicitante, recipiente, dependencia, cantidad_despensas, cantidad_mochilas_primaria, cantidad_mochilas_secundaria, cantidad_mochilas_preparatoria, cantidad_colchonetas, cantidad_aguas, cantidad_botes_pintura, cantidad_botes_impermeabilizante, cantidad_bicicletas, cantidad_mesas, cantidad_sillas, cantidad_dulces, cantidad_piñatas, cantidad_juguetes, firma_entrega, firma_recibe, tipo) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+
+    const values = [
+      Fecha || new Date().toISOString().split('T')[0],
+      Solicitante || '',
+      Recipiente || '',
+      Dependencia || '',
+      parseInt(Despensas) || 0,
+      parseInt(MochilaPrimaria) || 0,
+      parseInt(MochilasSecundaria) || 0,
+      parseInt(MochilasPreparatoria) || 0,
+      parseInt(Colchonetas) || 0,
+      parseInt(Aguas) || 0,
+      parseInt(Pintura) || 0,
+      parseInt(Impermeabilizante) || 0,
+      parseInt(Bicicletas) || 0,
+      parseInt(Mesas) || 0,
+      parseInt(Sillas) || 0,
+      parseInt(Dulces) || 0,
+      parseInt(Piñatas) || 0,
+      parseInt(Juguetes) || 0,
+      firma1FileName,
+      firma2FileName,
+      tipo
+    ];
+
+    DB.query(SQL_QUERY, values, (err, result) => {
+      if (err) {
+        console.error("Error al registrar el vale:", err);
+        res.status(500).json({ error: "Error al registrar el vale" });
+      } else {
+        res.status(200).json({ 
+          message: "Vale registrado exitosamente",
+          id: result.insertId 
+        });
+      }
+    });
+  } catch (error) {
+    console.error('Error processing vale:', error);
+    res.status(500).json({ error: "Error processing vale: " + error.message });
+  }
+});
+
+// Get all vales
+app.get("/vales", (req, res) => {
+  const query = "SELECT * FROM registro_vales ORDER BY fecha_entrega DESC";
+  
+  DB.query(query, (err, result) => {
+    if (err) {
+      console.error("Error al obtener vales:", err);
+      res.status(500).json({ error: "Error al obtener los vales" });
+    } else {
+      res.json(result);
+    }
   });
 });
