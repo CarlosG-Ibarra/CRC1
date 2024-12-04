@@ -86,23 +86,20 @@ const EntregarDespensas = () => {
     return filename.slice(((filename.lastIndexOf(".") - 1) >>> 0) + 1);
   };
 
-  const [suggestions, setSuggestions] = useState([]); // Initialize as empty array
-  const [debouncedName, setDebouncedName] = useState(""); // Debounced name input
-  const [isLoading, setIsLoading] = useState(false); // To track loading state
-  const [isNameFinalized, setIsNameFinalized] = useState(false); // Tracks if name input is finalized
-  const debounceTimer = useRef(null); // Timer reference for debounce
+  const [suggestions, setSuggestions] = useState([]); 
+  const [debouncedName, setDebouncedName] = useState(""); 
+  const [isLoading, setIsLoading] = useState(false);
+  const [isNameFinalized, setIsNameFinalized] = useState(false);
+  const debounceTimer = useRef(null);
 
   const signatureRef = useRef();
 
-  // Handle input changes
   const handleChange = (e) => {
     const { name, value } = e.target;
 
-    // Update the form data with the new value
     setFormData((prevData) => {
       const updatedData = { ...prevData, [name]: value };
 
-      // Recalculate 'aportacion' if one of the ingresoSol values changed
       if (
         name === "ingresoSol1" ||
         name === "ingresoSol2" ||
@@ -114,7 +111,6 @@ const EntregarDespensas = () => {
           parseFloat(updatedData.ingresoSol3 || 0);
       }
 
-      // Recalculate 'total' if any of the monthly expenses changed
       const totalExpense = [
         updatedData.ingreso_mensual,
         updatedData.aportacion,
@@ -193,7 +189,6 @@ const EntregarDespensas = () => {
       ocupacion: suggestion.ocupacion,
       estadoCivil: suggestion.estado_civil,
 
-      // Add family data autofill here
       nombre1: suggestion.nombre_1,
       sexoIntegrante1: suggestion.sexo_integrante_1,
       parentesco1: suggestion.parentesco_1,
@@ -221,7 +216,6 @@ const EntregarDespensas = () => {
       escolaridadIntegrante3: suggestion.escolaridad_integrante_3,
       ingresoSol3: suggestion.ingreso_sol3,
 
-      // Add monthly expenses data autofill here
       ingreso_mensual: suggestion.ingreso_mensual,
       aportacion: suggestion.aportacion,
       luz: suggestion.luz,
@@ -246,14 +240,12 @@ const EntregarDespensas = () => {
       numCuartos: suggestion.numCuartos,
       nivelSocioEconomico: suggestion.nivelSocioEconomico,
     }));
-    // Mark the name as finalized
     setIsNameFinalized(true);
-    setSuggestions([]); // Clear suggestions after selection
+    setSuggestions([]);
   };
 
-  // Function to clear the signature canvas
   const clearSignature = () => {
-    signatureRef.current.clear(); // This will clear the signature
+    signatureRef.current.clear();
   };
 
   const handleFileUploads = async () => {
@@ -265,7 +257,6 @@ const EntregarDespensas = () => {
         firma: null,
       };
 
-      // Handle INE files
       if (formData.ine1)
         fileNames.ine1 = `${formData.nombreSolicitante}-ine1.${getFileExtension(
           formData.ine1.name
@@ -279,12 +270,9 @@ const EntregarDespensas = () => {
           formData.ine3.name
         )}`;
 
-      // Handle signature
-      if (signatureRef.current && !signatureRef.current.isEmpty()) {
+      if (signatureRef.current && !signatureRef.current.isEmpty())
         fileNames.firma = `${formData.nombreSolicitante}-firma.png`;
-      }
 
-      // Create FormData here, before using it
       const formDataToSend = new FormData();
       formDataToSend.append("nombreSolicitante", formData.nombreSolicitante);
       if (formData.ine1)
@@ -294,7 +282,6 @@ const EntregarDespensas = () => {
       if (formData.ine3)
         formDataToSend.append("ine3", formData.ine3, fileNames.ine3);
 
-      // Handle signature
       if (signatureRef.current && !signatureRef.current.isEmpty()) {
         const signatureDataUrl = signatureRef.current.toDataURL("image/png");
         const blob = await (await fetch(signatureDataUrl)).blob();
@@ -302,7 +289,6 @@ const EntregarDespensas = () => {
         formDataToSend.append("firma", file);
       }
 
-      // Upload files
       const response = await fetch("http://localhost:3001/api/upload-files", {
         method: "POST",
         body: formDataToSend,
@@ -321,12 +307,9 @@ const EntregarDespensas = () => {
     e.preventDefault();
 
     try {
-      // First upload files and get the filenames
       const fileNames = await handleFileUploads();
 
-      // Prepare the data object to submit
       const dataToSubmit = {
-        // Personal details
         nombre_solicitante: formData.nombreSolicitante,
         calle: formData.calle,
         numero: formData.numero,
@@ -336,7 +319,6 @@ const EntregarDespensas = () => {
         zona: formData.zona,
         ruta: formData.ruta || 0,
 
-        // Study details
         motivo: formData.motivo,
         edad: formData.edad,
         sexo: formData.sexo,
@@ -346,7 +328,6 @@ const EntregarDespensas = () => {
         ocupacion: formData.ocupacion,
         fecha_registro: formData.fechaRegistro,
 
-        // Family details
         nombre_1: formData.nombre1,
         sexo_integrante_1: formData.sexoIntegrante1,
         parentesco_1: formData.parentesco1,
@@ -374,7 +355,6 @@ const EntregarDespensas = () => {
         escolaridad_integrante_3: formData.escolaridadIntegrante3,
         ingreso_sol3: formData.ingresoSol3,
 
-        // Monthly expenses
         ingreso_mensual: formData.ingreso_mensual,
         aportacion: formData.aportacion,
         luz: formData.luz,
@@ -391,7 +371,6 @@ const EntregarDespensas = () => {
         internet: formData.internet,
         total: formData.total,
 
-        // Belongings and other data
         vehiculo: formData.vehiculo,
         situacionLegal: formData.situacionLegal,
         materialParedes: formData.materialParedes,
@@ -400,7 +379,6 @@ const EntregarDespensas = () => {
         numCuartos: formData.numCuartos,
         nivelSocioEconomico: formData.nivelSocioEconomico,
 
-        // Files and comments
         firma: fileNames.firma,
         ine1: fileNames.ine1,
         ine2: fileNames.ine2,
@@ -410,7 +388,6 @@ const EntregarDespensas = () => {
 
       console.log("Data to submit:", dataToSubmit);
 
-      // Submit the form data
       const response = await fetch(
         "http://localhost:3001/api/estudio-socioeconomico",
         {
@@ -430,9 +407,7 @@ const EntregarDespensas = () => {
       const data = await response.json();
       console.log("Success:", data);
       alert("¡Formulario de Estudio Socioeconómico enviado correctamente!");
-      // Reset form after successful submission
       setFormData({
-        // Personal details
         nombreSolicitante: "",
         calle: "",
         numero: "",
@@ -442,7 +417,6 @@ const EntregarDespensas = () => {
         zona: "",
         ruta: "",
 
-        // Study details
         motivo: "",
         edad: "",
         sexo: "",
@@ -452,7 +426,6 @@ const EntregarDespensas = () => {
         ocupacion: "",
         fechaRegistro: "",
 
-        // Family details
         nombre1: "",
         sexoIntegrante1: "",
         parentesco1: "",
@@ -480,7 +453,6 @@ const EntregarDespensas = () => {
         escolaridadIntegrante3: "",
         ingresoSol3: "",
 
-        // Monthly expenses
         ingreso_mensual: "",
         aportacion: "",
         luz: "",
@@ -497,7 +469,6 @@ const EntregarDespensas = () => {
         internet: "",
         total: "",
 
-        // Belongings and other data
         vehiculo: "",
         situacionLegal: "",
         materialParedes: "",
@@ -506,7 +477,6 @@ const EntregarDespensas = () => {
         numCuartos: "",
         nivelSocioEconomico: "",
 
-        // Files and comments
         firma: "",
         ine1: null,
         ine2: null,
@@ -514,7 +484,6 @@ const EntregarDespensas = () => {
         comentarios: "",
       });
 
-      // Also clear the signature
       if (signatureRef.current) {
         signatureRef.current.clear();
       }
@@ -527,12 +496,15 @@ const EntregarDespensas = () => {
   return (
     <div className="entregar-despensas-container">
       <h1>Formulario de Estudio Socioeconómico</h1>
-      <form>
+      <form onSubmit={(e) => {
+      e.preventDefault();
+      handleSubmit(e);
+    }}>
+      
         <section className="entregar-despensas-section estudio-socioeconomico">
           <h2>Estudio Socioeconómico</h2>
 
           <div className="horizontal-group">
-            {/* Row 1 */}
             <div className="horizontal-group-row">
               <div className="entregar-despensas-group">
                 <label htmlFor="nombreSolicitante">
@@ -545,9 +517,9 @@ const EntregarDespensas = () => {
                   value={formData.nombreSolicitante}
                   onChange={handleNameChange}
                   placeholder="Escribe el nombre"
+                  required
                 />
 
-                {/* Suggestions Box */}
                 {Array.isArray(suggestions) && suggestions.length > 0 && (
                   <div className="suggestions-box">
                     {isLoading ? (
@@ -582,7 +554,8 @@ const EntregarDespensas = () => {
                   id="motivo"
                   name="motivo"
                   value={formData.motivo}
-                  onChange={handleChange} // Allow updates for existing and new users
+                  onChange={handleChange} 
+                  required
                 />
               </div>
 
@@ -593,12 +566,12 @@ const EntregarDespensas = () => {
                   id="fechaRegistro"
                   name="fechaRegistro"
                   value={formData.fechaRegistro}
-                  onChange={handleChange} // This is unique for each "entrega"
+                  onChange={handleChange} 
+                  required
                 />
               </div>
             </div>
 
-            {/* Address Fields */}
             <div className="horizontal-group-row">
               <div className="entregar-despensas-group">
                 <label htmlFor="calle">Calle</label>
@@ -607,7 +580,8 @@ const EntregarDespensas = () => {
                   id="calle"
                   name="calle"
                   value={formData.calle}
-                  onChange={handleChange} // Allow updates
+                  onChange={handleChange} 
+                  required
                 />
               </div>
 
@@ -618,7 +592,8 @@ const EntregarDespensas = () => {
                   id="numero"
                   name="numero"
                   value={formData.numero}
-                  onChange={handleChange} // Allow updates
+                  onChange={handleChange} 
+                  required
                 />
               </div>
 
@@ -629,7 +604,8 @@ const EntregarDespensas = () => {
                   id="colonia"
                   name="colonia"
                   value={formData.colonia}
-                  onChange={handleChange} // Allow updates
+                  onChange={handleChange} 
+                  required
                 />
               </div>
 
@@ -640,12 +616,12 @@ const EntregarDespensas = () => {
                   id="cp"
                   name="cp"
                   value={formData.cp}
-                  onChange={handleChange} // Allow updates
+                  onChange={handleChange} 
+                  required
                 />
               </div>
             </div>
 
-            {/* Contact Info and Zone */}
             <div className="horizontal-group-row">
               <div className="entregar-despensas-group">
                 <label htmlFor="tel">Teléfono</label>
@@ -654,7 +630,8 @@ const EntregarDespensas = () => {
                   id="tel"
                   name="tel"
                   value={formData.tel}
-                  onChange={handleChange} // Allow updates
+                  onChange={handleChange} 
+                  required
                 />
               </div>
 
@@ -665,12 +642,12 @@ const EntregarDespensas = () => {
                   id="zona"
                   name="zona"
                   value={formData.zona}
-                  onChange={handleChange} // Allow updates
+                  onChange={handleChange} 
+                  required
                 />
               </div>
             </div>
 
-            {/* Additional Info */}
             <div className="horizontal-group-row">
               <div className="entregar-despensas-group">
                 <label htmlFor="edad">Edad</label>
@@ -679,7 +656,8 @@ const EntregarDespensas = () => {
                   id="edad"
                   name="edad"
                   value={formData.edad}
-                  onChange={handleChange} // Allow updates
+                  onChange={handleChange} 
+                  required
                 />
               </div>
 
@@ -690,7 +668,8 @@ const EntregarDespensas = () => {
                   id="escolaridad"
                   name="escolaridad"
                   value={formData.escolaridad}
-                  onChange={handleChange} // Allow updates
+                  onChange={handleChange} 
+                  required
                 />
               </div>
 
@@ -701,7 +680,8 @@ const EntregarDespensas = () => {
                   id="ocupacion"
                   name="ocupacion"
                   value={formData.ocupacion}
-                  onChange={handleChange} // Allow updates
+                  onChange={handleChange} 
+                  required
                 />
               </div>
 
@@ -712,7 +692,8 @@ const EntregarDespensas = () => {
                   id="estadoCivil"
                   name="estadoCivil"
                   value={formData.estadoCivil}
-                  onChange={handleChange} // Allow updates
+                  onChange={handleChange} 
+                  required
                 />
               </div>
             </div>
@@ -725,7 +706,8 @@ const EntregarDespensas = () => {
                   id="sexo"
                   name="sexo"
                   value={formData.sexo}
-                  onChange={handleChange} // Allow updates
+                  onChange={handleChange} 
+                  required
                 >
                   <option value="" disabled>
                     Seleccione
@@ -742,7 +724,8 @@ const EntregarDespensas = () => {
                   id="genero"
                   name="genero"
                   value={formData.genero}
-                  onChange={handleChange} // Allow updates
+                  onChange={handleChange} 
+                  required
                 >
                   <option value="" disabled>
                     Seleccione
@@ -760,7 +743,6 @@ const EntregarDespensas = () => {
         <section className="entregar-despensas-section datos-integracion-familiar">
           <h2>Datos de la integración familiar</h2>
 
-          {/* Family Member 1 */}
           <div className="persona-container">
             <h3>Integrante 1</h3>
             <div className="horizontal-group">
@@ -772,6 +754,7 @@ const EntregarDespensas = () => {
                   name="nombre1"
                   value={formData.nombre1}
                   onChange={handleChange}
+                  
                 />
               </div>
 
@@ -804,7 +787,7 @@ const EntregarDespensas = () => {
                   id="ocupacionIntegrante1"
                   name="ocupacionIntegrante1"
                   value={formData.ocupacionIntegrante1}
-                  onChange={handleChange} // Updated to handleChange
+                  onChange={handleChange}
                 />
               </div>
             </div>
@@ -817,7 +800,7 @@ const EntregarDespensas = () => {
                   id="escolaridadIntegrante1"
                   name="escolaridadIntegrante1"
                   value={formData.escolaridadIntegrante1}
-                  onChange={handleChange} // Updated to handleChange
+                  onChange={handleChange}
                 />
               </div>
 
@@ -828,7 +811,7 @@ const EntregarDespensas = () => {
                   id="estadoCivilIntegrante1"
                   name="estadoCivilIntegrante1"
                   value={formData.estadoCivilIntegrante1}
-                  onChange={handleChange} // Updated to handleChange
+                  onChange={handleChange}
                 />
               </div>
 
@@ -839,7 +822,7 @@ const EntregarDespensas = () => {
                   id="ingresoSol1"
                   name="ingresoSol1"
                   value={formData.ingresoSol1}
-                  onChange={handleChange} // Updated to handleChange
+                  onChange={handleChange}
                 />
               </div>
 
@@ -849,7 +832,7 @@ const EntregarDespensas = () => {
                   id="sexoIntegrante1"
                   name="sexoIntegrante1"
                   value={formData.sexoIntegrante1}
-                  onChange={handleChange} // Updated to handleChange
+                  onChange={handleChange}
                 >
                   <option value="">Seleccione</option>
                   <option value="masculino">Masculino</option>
@@ -860,7 +843,6 @@ const EntregarDespensas = () => {
             </div>
           </div>
 
-          {/* Family Member 2 */}
           <div className="persona-container">
             <h3>Integrante 2</h3>
             <div className="horizontal-group">
@@ -871,7 +853,7 @@ const EntregarDespensas = () => {
                   id="nombre2"
                   name="nombre2"
                   value={formData.nombre2}
-                  onChange={handleChange} // Updated to handleChange
+                  onChange={handleChange}
                 />
               </div>
 
@@ -882,7 +864,7 @@ const EntregarDespensas = () => {
                   id="edadIntegrante2"
                   name="edadIntegrante2"
                   value={formData.edadIntegrante2}
-                  onChange={handleChange} // Updated to handleChange
+                  onChange={handleChange}
                 />
               </div>
 
@@ -893,7 +875,7 @@ const EntregarDespensas = () => {
                   id="parentesco2"
                   name="parentesco2"
                   value={formData.parentesco2}
-                  onChange={handleChange} // Updated to handleChange
+                  onChange={handleChange}
                 />
               </div>
 
@@ -904,7 +886,7 @@ const EntregarDespensas = () => {
                   id="ocupacionIntegrante2"
                   name="ocupacionIntegrante2"
                   value={formData.ocupacionIntegrante2}
-                  onChange={handleChange} // Updated to handleChange
+                  onChange={handleChange}
                 />
               </div>
             </div>
@@ -917,7 +899,7 @@ const EntregarDespensas = () => {
                   id="escolaridadIntegrante2"
                   name="escolaridadIntegrante2"
                   value={formData.escolaridadIntegrante2}
-                  onChange={handleChange} // Updated to handleChange
+                  onChange={handleChange}
                 />
               </div>
 
@@ -928,7 +910,7 @@ const EntregarDespensas = () => {
                   id="estadoCivilIntegrante2"
                   name="estadoCivilIntegrante2"
                   value={formData.estadoCivilIntegrante2}
-                  onChange={handleChange} // Updated to handleChange
+                  onChange={handleChange}
                 />
               </div>
 
@@ -939,7 +921,7 @@ const EntregarDespensas = () => {
                   id="ingresoSol2"
                   name="ingresoSol2"
                   value={formData.ingresoSol2}
-                  onChange={handleChange} // Updated to handleChange
+                  onChange={handleChange}
                 />
               </div>
 
@@ -949,7 +931,7 @@ const EntregarDespensas = () => {
                   id="sexoIntegrante2"
                   name="sexoIntegrante2"
                   value={formData.sexoIntegrante2}
-                  onChange={handleChange} // Updated to handleChange
+                  onChange={handleChange}
                 >
                   <option value="">Seleccione</option>
                   <option value="masculino">Masculino</option>
@@ -960,7 +942,6 @@ const EntregarDespensas = () => {
             </div>
           </div>
 
-          {/* Family Member 3 */}
           <div className="persona-container">
             <h3>Integrante 3</h3>
             <div className="horizontal-group">
@@ -971,7 +952,7 @@ const EntregarDespensas = () => {
                   id="nombre3"
                   name="nombre3"
                   value={formData.nombre3}
-                  onChange={handleChange} // Updated to handleChange
+                  onChange={handleChange}
                 />
               </div>
 
@@ -982,7 +963,7 @@ const EntregarDespensas = () => {
                   id="edadIntegrante3"
                   name="edadIntegrante3"
                   value={formData.edadIntegrante3}
-                  onChange={handleChange} // Updated to handleChange
+                  onChange={handleChange}
                 />
               </div>
 
@@ -993,7 +974,7 @@ const EntregarDespensas = () => {
                   id="parentesco3"
                   name="parentesco3"
                   value={formData.parentesco3}
-                  onChange={handleChange} // Updated to handleChange
+                  onChange={handleChange}
                 />
               </div>
 
@@ -1004,7 +985,7 @@ const EntregarDespensas = () => {
                   id="ocupacionIntegrante3"
                   name="ocupacionIntegrante3"
                   value={formData.ocupacionIntegrante3}
-                  onChange={handleChange} // Updated to handleChange
+                  onChange={handleChange}
                 />
               </div>
             </div>
@@ -1017,7 +998,7 @@ const EntregarDespensas = () => {
                   id="escolaridadIntegrante3"
                   name="escolaridadIntegrante3"
                   value={formData.escolaridadIntegrante3}
-                  onChange={handleChange} // Updated to handleChange
+                  onChange={handleChange}
                 />
               </div>
 
@@ -1028,7 +1009,7 @@ const EntregarDespensas = () => {
                   id="estadoCivilIntegrante3"
                   name="estadoCivilIntegrante3"
                   value={formData.estadoCivilIntegrante3}
-                  onChange={handleChange} // Updated to handleChange
+                  onChange={handleChange}
                 />
               </div>
 
@@ -1039,7 +1020,7 @@ const EntregarDespensas = () => {
                   id="ingresoSol3"
                   name="ingresoSol3"
                   value={formData.ingresoSol3}
-                  onChange={handleChange} // Updated to handleChange
+                  onChange={handleChange}
                 />
               </div>
 
@@ -1049,7 +1030,7 @@ const EntregarDespensas = () => {
                   id="sexoIntegrante3"
                   name="sexoIntegrante3"
                   value={formData.sexoIntegrante3}
-                  onChange={handleChange} // Updated to handleChange
+                  onChange={handleChange}
                 >
                   <option value="">Seleccione</option>
                   <option value="masculino">Masculino</option>
@@ -1064,7 +1045,6 @@ const EntregarDespensas = () => {
         <section className="entregar-despensas-section gastos-mensuales">
           <h2>Gastos Mensuales</h2>
 
-          {/* Ingreso Mensual */}
           <div className="horizontal-group">
             <div className="entregar-despensas-group">
               <label htmlFor="ingreso_mensual">Ingreso Mensual</label>
@@ -1074,12 +1054,11 @@ const EntregarDespensas = () => {
                 id="ingreso_mensual"
                 name="ingreso_mensual"
                 value={formData.ingreso_mensual}
-                onChange={handleChange} // Updated to handleChange
-                placeholder="Ingrese el ingreso mensual"
+                onChange={handleChange}
+                required
               />
             </div>
 
-            {/* Aportación */}
             <div className="entregar-despensas-group">
               <label htmlFor="aportacion">Aportación</label>
               <input
@@ -1088,8 +1067,8 @@ const EntregarDespensas = () => {
                 id="aportacion"
                 name="aportacion"
                 value={formData.aportacion}
-                onChange={handleChange} // Updated to handleChange
-                placeholder="Ingrese la aportación"
+                onChange={handleChange}
+                required
               />
             </div>
           </div>
@@ -1104,8 +1083,8 @@ const EntregarDespensas = () => {
                 id="luz"
                 name="luz"
                 value={formData.luz}
-                onChange={handleChange} // Updated to handleChange
-                placeholder="Gasto mensual en luz"
+                onChange={handleChange}
+                required
               />
             </div>
 
@@ -1118,8 +1097,8 @@ const EntregarDespensas = () => {
                 id="agua"
                 name="agua"
                 value={formData.agua}
-                onChange={handleChange} // Updated to handleChange
-                placeholder="Gasto mensual en agua"
+                onChange={handleChange}
+                required
               />
             </div>
 
@@ -1132,8 +1111,8 @@ const EntregarDespensas = () => {
                 id="telefono"
                 name="telefono"
                 value={formData.telefono}
-                onChange={handleChange} // Updated to handleChange
-                placeholder="Gasto mensual en teléfono"
+                onChange={handleChange}
+                required
               />
             </div>
           </div>
@@ -1148,8 +1127,8 @@ const EntregarDespensas = () => {
                 id="creditos"
                 name="creditos"
                 value={formData.creditos}
-                onChange={handleChange} // Updated to handleChange
-                placeholder="Gasto mensual en créditos"
+                onChange={handleChange}
+                required
               />
             </div>
 
@@ -1162,8 +1141,8 @@ const EntregarDespensas = () => {
                 id="gas"
                 name="gas"
                 value={formData.gas}
-                onChange={handleChange} // Updated to handleChange
-                placeholder="Gasto mensual en gas"
+                onChange={handleChange}
+                required
               />
             </div>
 
@@ -1176,8 +1155,8 @@ const EntregarDespensas = () => {
                 id="medicinas"
                 name="medicinas"
                 value={formData.medicinas}
-                onChange={handleChange} // Updated to handleChange
-                placeholder="Gasto mensual en medicinas"
+                onChange={handleChange}
+                required
               />
             </div>
           </div>
@@ -1192,8 +1171,8 @@ const EntregarDespensas = () => {
                 id="transporte"
                 name="transporte"
                 value={formData.transporte}
-                onChange={handleChange} // Updated to handleChange
-                placeholder="Gasto mensual en transporte"
+                onChange={handleChange}
+                required
               />
             </div>
 
@@ -1206,8 +1185,8 @@ const EntregarDespensas = () => {
                 id="television"
                 name="television"
                 value={formData.television}
-                onChange={handleChange} // Updated to handleChange
-                placeholder="Gasto mensual en televisión"
+                onChange={handleChange}
+                required
               />
             </div>
 
@@ -1220,8 +1199,8 @@ const EntregarDespensas = () => {
                 id="renta"
                 name="renta"
                 value={formData.renta}
-                onChange={handleChange} // Updated to handleChange
-                placeholder="Gasto mensual en renta"
+                onChange={handleChange}
+                required
               />
             </div>
           </div>
@@ -1236,8 +1215,8 @@ const EntregarDespensas = () => {
                 id="alimentacion"
                 name="alimentacion"
                 value={formData.alimentacion}
-                onChange={handleChange} // Updated to handleChange
-                placeholder="Gasto mensual en alimentación"
+                onChange={handleChange}
+                required
               />
             </div>
 
@@ -1250,8 +1229,8 @@ const EntregarDespensas = () => {
                 id="escuela"
                 name="escuela"
                 value={formData.escuela}
-                onChange={handleChange} // Updated to handleChange
-                placeholder="Gasto mensual en escuela"
+                onChange={handleChange}
+                required
               />
             </div>
 
@@ -1264,8 +1243,8 @@ const EntregarDespensas = () => {
                 id="internet"
                 name="internet"
                 value={formData.internet}
-                onChange={handleChange} // Updated to handleChange
-                placeholder="Gasto mensual en internet"
+                onChange={handleChange}
+                required
               />
             </div>
           </div>
@@ -1280,9 +1259,8 @@ const EntregarDespensas = () => {
                 id="total"
                 name="total"
                 value={formData.total}
-                onChange={handleChange} // Updated to handleChange
-                placeholder="Total de los gastos mensuales"
-                disabled
+                onChange={handleChange}
+                required
               />
             </div>
           </div>
@@ -1301,6 +1279,7 @@ const EntregarDespensas = () => {
                   name="vehiculo"
                   value={formData.vehiculo}
                   onChange={handleChange}
+                  required
                 >
                   <option value="">Seleccione</option>
                   <option value="si">Sí</option>
@@ -1317,6 +1296,7 @@ const EntregarDespensas = () => {
                   name="situacionLegal"
                   value={formData.situacionLegal}
                   onChange={handleChange}
+                  required
                 >
                   <option value="">Seleccione</option>
                   <option value="propia">Propia</option>
@@ -1334,6 +1314,7 @@ const EntregarDespensas = () => {
                   name="materialParedes"
                   value={formData.materialParedes}
                   onChange={handleChange}
+                  required
                 />
               </div>
 
@@ -1345,6 +1326,7 @@ const EntregarDespensas = () => {
                   name="materialTecho"
                   value={formData.materialTecho}
                   onChange={handleChange}
+                  required
                 />
               </div>
             </div>
@@ -1359,6 +1341,7 @@ const EntregarDespensas = () => {
                   name="materialPiso"
                   value={formData.materialPiso}
                   onChange={handleChange}
+                  required
                 />
               </div>
 
@@ -1370,6 +1353,7 @@ const EntregarDespensas = () => {
                   name="numCuartos"
                   value={formData.numCuartos}
                   onChange={handleChange}
+                  required
                 />
               </div>
 
@@ -1382,6 +1366,7 @@ const EntregarDespensas = () => {
                   name="nivelSocioEconomico"
                   value={formData.nivelSocioEconomico}
                   onChange={handleChange}
+                  required
                 >
                   <option value="">Seleccione</option>
                   <option value="bajo">Bajo</option>
@@ -1400,13 +1385,14 @@ const EntregarDespensas = () => {
                   type="file"
                   id="ine1"
                   name="ine1"
-                  accept="image/*" // Only allows image files
+                  accept="image/*"
                   onChange={(e) =>
                     setFormData((prevData) => ({
                       ...prevData,
-                      ine1: e.target.files[0], // Save the file object directly
+                      ine1: e.target.files[0],
                     }))
                   }
+                  required
                 />
               </div>
 
@@ -1416,29 +1402,31 @@ const EntregarDespensas = () => {
                   type="file"
                   id="ine2"
                   name="ine2"
-                  accept="image/*" // Only allows image files
+                  accept="image/*"
                   onChange={(e) =>
                     setFormData((prevData) => ({
                       ...prevData,
-                      ine2: e.target.files[0], // Save the file object directly
+                      ine2: e.target.files[0],
                     }))
                   }
+                  required
                 />
               </div>
 
               <div className="entregar-despensas-group">
-                <label htmlFor="ine3">INE Parte 3</label>
+                <label htmlFor="ine3">Foto De Entrega</label>
                 <input
                   type="file"
                   id="ine3"
                   name="ine3"
-                  accept="image/*" // Only allows image files
+                  accept="image/*"
                   onChange={(e) =>
                     setFormData((prevData) => ({
                       ...prevData,
-                      ine3: e.target.files[0], // Save the file object directly
+                      ine3: e.target.files[0],
                     }))
                   }
+                  required
                 />
               </div>
 
@@ -1452,6 +1440,7 @@ const EntregarDespensas = () => {
                     height: 200,
                     className: "signature-canvas",
                   }}
+                  
                 />
                 <button type="button" onClick={clearSignature}>
                   Limpiar Firma
@@ -1475,7 +1464,7 @@ const EntregarDespensas = () => {
         </section>
 
         <div className="form-buttons">
-          <button type="button" onClick={handleSubmit}>
+          <button type="submit" >
             Enviar
           </button>
         </div>

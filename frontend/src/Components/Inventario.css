@@ -1,0 +1,107 @@
+.inventario-container {
+  padding: 20px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.inventario-container h1 {
+  color: #0192C8;
+  margin-bottom: 30px;
+  text-align: center;
+}
+
+.inventario-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 20px;
+  padding: 20px;
+}
+
+.inventario-card {
+  background: white;
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  transition: transform 0.2s, box-shadow 0.2s;
+  text-align: center;
+}
+
+.inventario-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
+}
+
+.icon-container {
+  width: 60px;
+  height: 60px;
+  background: linear-gradient(135deg, #0192C8, #2F3F7B);
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 15px auto;
+}
+
+.item-icon {
+  font-size: 24px;
+  color: white;
+}
+
+.item-details {
+  flex: 1;
+}
+
+.item-details h3 {
+  color: #2F3F7B;
+  margin: 0 0 10px 0;
+  font-size: 1.1rem;
+}
+
+.cantidad {
+  margin: 0;
+}
+
+.label {
+  color: #666;
+  font-size: 0.9rem;
+}
+
+.value {
+  color: #0192C8;
+  font-weight: bold;
+  font-size: 2rem;
+}
+
+.btn-editar {
+  padding: 8px 16px;
+  background-color: #0192C8;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.9rem;
+}
+
+.btn-editar:hover {
+  background-color: #0182b8;
+}
+
+/* Responsive adjustments */
+@media (max-width: 600px) {
+  .inventario-grid {
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    padding: 10px;
+  }
+  
+  .inventario-card {
+    padding: 15px;
+  }
+  
+  .value {
+    font-size: 1.5rem;
+  }
+}

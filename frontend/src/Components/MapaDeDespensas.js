@@ -3,11 +3,11 @@ import { useJsApiLoader, GoogleMap, DirectionsRenderer, MarkerF } from "@react-g
 import axios from "axios";
 import "./MapaDeDespensas.css";
 
-// Define libraries array as a constant outside the component
+// Definir el array de bibliotecas como una constante fuera del componente
 const GOOGLE_MAPS_LIBRARIES = ['places', 'geometry'];
 
-// Google Maps loading options
-const GOOGLE_MAPS_API_KEY = "AIzaSyB7DhVp59EEf0xjAJgnWxBKv6Um3zzFQ_E";
+// Opciones de carga de Google Maps
+const GOOGLE_MAPS_API_KEY = "";
 
 // Coordenadas del centro de Chihuahua
 const CHIHUAHUA_CENTER = {
@@ -30,7 +30,7 @@ function MapaDeDespensas() {
 
   const [despensas, setDespensas] = useState([]);
   const [selectedAddresses, setSelectedAddresses] = useState(() => {
-    // Load saved addresses from localStorage on component mount
+    // Cargar direcciones guardadas desde localStorage al montar el componente
     const savedAddresses = localStorage.getItem('selectedAddresses');
     return savedAddresses ? JSON.parse(savedAddresses) : [];
   });
@@ -40,9 +40,9 @@ function MapaDeDespensas() {
     const savedRouteStarted = localStorage.getItem('routeStarted');
     return savedRouteStarted ? JSON.parse(savedRouteStarted) : false;
   });
-  // Add usage tracking
+  // Agregar seguimiento de uso
   const [dailyGeocodeCount, setDailyGeocodeCount] = useState(0);
-  const DAILY_GEOCODE_LIMIT = 200; // Free tier allows 300/day, we set lower for safety
+  const DAILY_GEOCODE_LIMIT = 200; // El nivel gratuito permite 300/día, establecemos un límite menor por seguridad
 
   // Obtiene las despensas con `ruta = 0` al montar el componente
   useEffect(() => {
@@ -56,7 +56,7 @@ function MapaDeDespensas() {
         }
         const data = await response.json();
         
-        // Mark despensas as selected if they're in selectedAddresses
+        // Marcar despensas como seleccionadas si están en selectedAddresses
         const updatedDespensas = data.map(despensa => ({
           ...despensa,
           selected: selectedAddresses.some(addr => addr.id_despensa === despensa.id_despensa)
@@ -82,7 +82,7 @@ function MapaDeDespensas() {
     }
   }, []);
 
-  // Reset daily counter at midnight
+  // Reiniciar el contador diario a medianoche
   useEffect(() => {
     const now = new Date();
     const night = new Date(
@@ -93,7 +93,7 @@ function MapaDeDespensas() {
     );
     const msToMidnight = night.getTime() - now.getTime();
 
-    // Reset counter at midnight
+    // Reiniciar contador a medianoche
     const timer = setTimeout(() => {
       setDailyGeocodeCount(0);
     }, msToMidnight);
@@ -101,43 +101,43 @@ function MapaDeDespensas() {
     return () => clearTimeout(timer);
   }, []);
 
-  // Save routeStarted to localStorage whenever it changes
+  // Guardar routeStarted en localStorage cuando cambie
   useEffect(() => {
     localStorage.setItem('routeStarted', JSON.stringify(routeStarted));
   }, [routeStarted]);
 
-  // Save selected addresses to localStorage whenever they change
+  // Guardar direcciones seleccionadas en localStorage cuando cambien
   useEffect(() => {
     localStorage.setItem('selectedAddresses', JSON.stringify(selectedAddresses));
   }, [selectedAddresses]);
 
   // Geocodifica la dirección para obtener las coordenadas
   const geocodeAddress = async (address) => {
-    // Check daily limit
+    // Verificar el límite diario
     if (dailyGeocodeCount >= DAILY_GEOCODE_LIMIT) {
       alert('Se alcanzó el límite diario de búsquedas de direcciones. Por favor, intente mañana.');
       return null;
     }
 
-    // Format the address with more structure
+    // Formatear la dirección con más estructura
     const fullAddress = `${address}, Chihuahua, CHIH, Mexico`;
 
     try {
-      // First try with full address
+      // Primero intentar con la dirección completa
       let geocodeUrl = `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(
         fullAddress
-      )}&key=AIzaSyB7DhVp59EEf0xjAJgnWxBKv6Um3zzFQ_E`;
+      )}&key=${GOOGLE_MAPS_API_KEY}`;
 
       let response = await axios.get(geocodeUrl);
       setDailyGeocodeCount(prev => prev + 1);
 
       if (response.data.status === "ZERO_RESULTS") {
-        // If full address fails, try with just street and city
+        // Si la dirección completa falla, intentar solo con calle y ciudad
         const simpleAddress = `${address}, Chihuahua`;
         
         geocodeUrl = `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(
           simpleAddress
-        )}&key=AIzaSyB7DhVp59EEf0xjAJgnWxBKv6Um3zzFQ_E`;
+        )}&key=${GOOGLE_MAPS_API_KEY}`;
         
         response = await axios.get(geocodeUrl);
         setDailyGeocodeCount(prev => prev + 1);
@@ -150,7 +150,7 @@ function MapaDeDespensas() {
 
       if (response.data.status === "OK") {
         const result = response.data.results[0];
-        // Check if the result is in Chihuahua
+        // Verificar si el resultado está en Chihuahua
         const isInChihuahua = result.formatted_address.toLowerCase().includes('chihuahua');
         
         if (!isInChihuahua) {
@@ -181,8 +181,19 @@ function MapaDeDespensas() {
     const updatedDespensas = await Promise.all(
       despensas.map(async (despensa) => {
         if (despensa.id_despensa === despensaId) {
+          // Verificar si ya tenemos coordenadas para esta despensa
+          const existingAddress = selectedAddresses.find(addr => addr.id_despensa === despensaId);
+          if (existingAddress?.coordinates) {
+            return {
+              ...despensa,
+              selected: !despensa.selected,
+              coordinates: existingAddress.coordinates,
+              addressNotFound: existingAddress.addressNotFound
+            };
+          }
+
           if (!despensa.coordinates) {
-            // Format the address more carefully
+            // Formatear la dirección con más cuidado
             const streetAddress = despensa.numero ? 
               `${despensa.calle} ${despensa.numero}` : 
               despensa.calle;
@@ -209,12 +220,20 @@ function MapaDeDespensas() {
       })
     );
     setDespensas(updatedDespensas);
-    setSelectedAddresses(
-      updatedDespensas.filter((despensa) => despensa.selected)
-    );
+    
+    // Actualizar selectedAddresses mientras se preservan las coordenadas existentes
+    const newSelectedAddresses = updatedDespensas
+      .filter((despensa) => despensa.selected)
+      .map(despensa => ({
+        ...despensa,
+        coordinates: despensa.coordinates || 
+          selectedAddresses.find(addr => addr.id_despensa === despensa.id_despensa)?.coordinates
+      }));
+    
+    setSelectedAddresses(newSelectedAddresses);
   };
 
-  // Function to handle delivery status update
+  // Función para manejar el estado de entrega
   const handleDeliveryStatus = async (id_despensa, status) => {
     try {
       const newRuta = status === 'delivered' ? 2 : 0;
@@ -237,21 +256,21 @@ function MapaDeDespensas() {
         throw new Error("Error al actualizar el estado de entrega");
       }
 
-      // Update local states
-      // 1. Remove from selectedAddresses
+      // Actualizar estados locales
+      // 1. Eliminar de selectedAddresses
       setSelectedAddresses(prev => prev.filter(addr => addr.id_despensa !== id_despensa));
       
-      // 2. Update despensas list
+      // 2. Actualizar lista de despensas
       setDespensas(prev => prev.filter(desp => desp.id_despensa !== id_despensa));
 
-      // 3. If no more addresses are selected, reset routeStarted
+      // 3. Si no hay más direcciones seleccionadas, reiniciar routeStarted
       const remainingAddresses = selectedAddresses.filter(addr => addr.id_despensa !== id_despensa);
       if (remainingAddresses.length === 0) {
         setRouteStarted(false);
         localStorage.setItem('routeStarted', 'false');
       }
 
-      // 4. Refresh the despensas list if marked as not delivered
+      // 4. Actualizar la lista de despensas si se marca como no entregada
       if (status === 'not-delivered') {
         const fetchResponse = await fetch("http://localhost:3001/despensas/sin-ruta");
         if (!fetchResponse.ok) {
@@ -270,10 +289,10 @@ function MapaDeDespensas() {
   // Inicia la ruta en Google Maps con las direcciones seleccionadas
   const handleStartRoute = async () => {
     try {
-      // Create a copy of selectedAddresses to update
+      // Crear una copia de selectedAddresses para actualizar
       const updatedAddresses = [...selectedAddresses];
 
-      // Update the ruta to 1 (in progress) for each selected despensa
+      // Actualizar la ruta a 1 (en progreso) para cada despensa seleccionada
       for (const address of selectedAddresses) {
         const response = await fetch(
           "http://localhost:3001/despensa/actualizar-ruta",
@@ -293,17 +312,17 @@ function MapaDeDespensas() {
           throw new Error("Error al actualizar la ruta");
         }
 
-        // Update the address in our local state
+        // Actualizar la dirección en nuestro estado local
         const index = updatedAddresses.findIndex(addr => addr.id_despensa === address.id_despensa);
         if (index !== -1) {
           updatedAddresses[index] = { ...updatedAddresses[index], ruta: 1 };
         }
       }
 
-      // Update selectedAddresses with the new route status
+      // Actualizar selectedAddresses con el nuevo estado de ruta
       setSelectedAddresses(updatedAddresses);
 
-      // Open the route in Google Maps
+      // Abrir la ruta en Google Maps
       const waypoints = selectedAddresses
         .map(
           ({ calle, numero, colonia }) =>
@@ -314,7 +333,7 @@ function MapaDeDespensas() {
       const mapsUrl = `https://www.google.com/maps/dir/?api=1&origin=${userLocation.lat},${userLocation.lng}&destination=${userLocation.lat},${userLocation.lng}&waypoints=${waypoints}`;
       window.open(mapsUrl, "_blank");
       
-      // Set route as started to show delivery buttons
+      // Establecer la ruta como iniciada para mostrar botones de entrega
       setRouteStarted(true);
 
     } catch (error) {

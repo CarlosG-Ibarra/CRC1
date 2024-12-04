@@ -48,14 +48,14 @@ const AdministracionAlta = () => {
           },
           {
             headers: {
-              "Content-Type": "application/json", // Ensure the content type is JSON
+              "Content-Type": "application/json", // Asegurar que el tipo de contenido sea JSON
             },
           }
         );
 
         alert("Usuario registrado exitosamente!");
         console.log(response.data);
-        // Reset form data after successful registration
+        // Reiniciar los datos del formulario después de un registro exitoso
         setFormData({
           name: "",
           email: "",

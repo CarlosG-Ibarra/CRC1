@@ -15,7 +15,7 @@ function Login({ onLogin }) {
         try {
             const response = await axios.post('http://localhost:3001/login', {
                 email: username,
-                pass: password, // Change 'password' to 'pass' for consistency with backend
+                pass: password, // Cambiar 'password' a 'pass' para consistencia con el backend
             });
 
             if (response.status === 200) {

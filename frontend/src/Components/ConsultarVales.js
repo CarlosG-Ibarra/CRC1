@@ -20,13 +20,13 @@ function ConsultarVales() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  // Fetch vales when component mounts or search terms change
+  // Obtener vales cuando el componente se monta o cambian los términos de búsqueda
   useEffect(() => {
     const fetchVales = async () => {
       setLoading(true);
       setError(null);
       try {
-        // Combine text search and date filter
+        // Combinar búsqueda de texto y filtro de fecha
         const searchParams = new URLSearchParams();
         if (searchTerm) searchParams.append('term', searchTerm);
         if (dateFilter) searchParams.append('date', dateFilter);
@@ -55,7 +55,7 @@ function ConsultarVales() {
       }
     };
 
-    // Add debounce to prevent too many API calls
+    // Agregar debounce para evitar demasiadas llamadas a la API
     const timeoutId = setTimeout(() => {
       fetchVales();
     }, 300);

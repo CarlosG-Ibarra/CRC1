@@ -19,15 +19,15 @@ function Header({ onLogout, isLoggedIn }) {
 
     const handleLogout = () => {
         onLogout();
-        navigate('/'); // Redirect to the main page on logout
+        navigate('/'); // Redirigir a la página principal al cerrar sesión
     };
 
     const handleBackClick = () => {
-        // Check if the current path is one of the administrative pages
+        // Verificar si la ruta actual es una de las páginas administrativas
         if (location.pathname === '/AdministracionAlta' || location.pathname === '/AdministracionBaja' || location.pathname === '/AdministracionCon') {
-            navigate('/Administracion'); // Navigate back to /Administracion
+            navigate('/Administracion'); // Navegar de vuelta a /Administracion
         } else {
-            navigate('/'); // Default behavior: navigate back to the main page
+            navigate('/'); // Comportamiento predeterminado: navegar de vuelta a la página principal
         }
     };
     

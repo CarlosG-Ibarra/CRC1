@@ -1,29 +1,40 @@
-/* Dashboard Scoped Styles */
 .dashboard-content {
-  padding: 20px;
+  padding: 30px;
   max-width: 1500px;
   margin: 0 auto;
-  background-color: #f7f9fc;
+  background-color: #f8faff;
   font-family: 'Inter', Arial, sans-serif;
+  min-height: 100vh;
 }
 
-/* Title */
 .dashboard-content .h1title {
-  font-size: 2.8rem;
+  font-size: 2.5rem;
   text-align: center;
-  font-weight: 700;
+  font-weight: 600;
   color: #0192C8;
-  margin-bottom: 30px;
-  border-bottom: 4px solid #0192C8;
-  display: inline-block;
-  padding-bottom: 5px;
+  margin-bottom: 40px;
+  position: relative;
+  padding-bottom: 10px;
+}
+
+.dashboard-content .h1title::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100px;
+  height: 4px;
+  background: linear-gradient(to right, #0192C8, #496D9F);
+  border-radius: 2px;
 }
 
 .dashboard-content .options-container {
   display: grid;
-  grid-template-columns: repeat(3, 1fr); /* Limit to 3 buttons per row */
-  gap: 20px;
-  margin: 0 auto; /* Centers the container */
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 25px;
+  margin: 0 auto 40px;
+  padding: 0 10px;
 }
 
 .dashboard-content .option-button-dashboard {
@@ -32,191 +43,169 @@
   justify-content: center;
   flex-direction: column;
   text-decoration: none;
+  background: white;
+  color: #0192C8;
+  border-radius: 16px;
+  height: 180px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  transition: all 0.3s ease;
+  border: 1px solid rgba(1, 146, 200, 0.1);
+  position: relative;
+  overflow: hidden;
+}
+
+.dashboard-content .option-button-dashboard::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
   background: linear-gradient(to right, #0192C8, #496D9F, #41558A, #2F3F7B, #14296C);
-  color: #fff;
-  border-radius: 15px;
-  height: 160px;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
-  transition: transform 0.3s, box-shadow 0.3s;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  z-index: 1;
 }
 
 .dashboard-content .option-button-dashboard:hover {
   transform: translateY(-5px);
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.25);
+  color: white;
+}
+
+.dashboard-content .option-button-dashboard:hover::before {
+  opacity: 1;
+}
+
+.dashboard-content .option-button-dashboard > * {
+  position: relative;
+  z-index: 2;
 }
 
 .dashboard-content .button-icon-dashboard {
-  font-size: 3.5rem;
+  font-size: 3rem;
   margin-bottom: 15px;
+  transition: all 0.3s ease;
 }
 
-/* Info Boxes */
+.dashboard-content .option-button-dashboard:hover .button-icon-dashboard {
+  transform: scale(1.1);
+}
+
 .dashboard-content .info-boxes {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 2fr));
-  gap: 20px;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 25px;
   margin: 0 auto;
+  padding: 0 10px;
 }
 
 .dashboard-content .info-box {
-  background: #fff;
+  background: white;
   padding: 25px;
-  border-radius: 15px;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-  transition: transform 0.3s, box-shadow 0.3s;
+  border-radius: 16px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  transition: all 0.3s ease;
+  border: 1px solid rgba(1, 146, 200, 0.1);
 }
 
 .dashboard-content .info-box:hover {
   transform: translateY(-5px);
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.12);
 }
 
 .dashboard-content .info-box h3 {
-  background-color: #496D9F;
+  background: linear-gradient(to right, #0192C8, #496D9F, #41558A);
   color: white;
-  padding: 10px 15px;
-  border-radius: 8px;
+  padding: 12px 20px;
+  border-radius: 12px;
   text-align: center;
-  font-size: 1.5rem;
-  margin-bottom: 15px;
-}
-
-.dashboard-content .weather-icon {
-  font-size: 3rem;
-  margin-bottom: 10px;
-}
-
-.dashboard-content .weather-temp {
-  font-size: 2.5rem;
-  font-weight: bold;
-  color: #0192C8;
-}
-
-.dashboard-content .weather-description {
-  font-size: 1.1rem;
-  color: #555;
-}
-
-/* Weather Box Styles */
-.dashboard-content .weather-box {
-  background: linear-gradient(135deg, #ffffff, #f0f7ff);
-  border-radius: 15px;
-  padding: 25px;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-  text-align: center;
-  position: relative;
-  overflow: hidden;
-  transition: transform 0.3s, box-shadow 0.3s;
-}
-
-.dashboard-content .weather-box:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
-}
-
-.dashboard-content .weather-box h3 {
-  background-color: #496D9F;
-  color: white;
-  padding: 10px 15px;
-  border-radius: 8px;
-  text-align: center;
-  font-size: 1.5rem;
-  margin-bottom: 15px;
-}
-
-.dashboard-content .weather-icon {
-  font-size: 4rem;
-  margin: 15px 0;
-  color: #0192C8;
-  display: block;
-  text-align: center;
-}
-
-.dashboard-content .weather-temp {
-  font-size: 3.5rem;
-  font-weight: 700;
-  color: #0192C8;
-  margin: 15px 0;
-  text-align: center;
-  display: block;
-}
-
-.dashboard-content .weather-description {
   font-size: 1.4rem;
-  color: #496D9F;
-  text-align: center;
-  display: block;
-  font-weight: 500;
-  margin-top: 10px;
-}
-
-/* Calendar */
-.dashboard-content .calendar {
-  border: none;
-  border-radius: 10px;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-  width: 100%;
-  background-color: white;
-  padding: 10px;
-}
-
-.dashboard-content .react-calendar__tile {
-  text-align: center;
-  padding: 15px;
-  border-radius: 8px;
-  transition: background-color 0.3s;
-  color: #333;
+  margin-bottom: 20px;
   font-weight: 500;
 }
 
-.dashboard-content .react-calendar__month-view__days__day {
-  color: #333;
+.dashboard-content .weather-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
 }
 
-.dashboard-content .react-calendar__month-view__days__day--weekend {
-  color: #d10000;
+.dashboard-content .weather-icon {
+  font-size: 3.5rem;
+  margin: 15px 0;
+  color: #0192C8;
 }
 
-.dashboard-content .react-calendar__month-view__days__day--neighboringMonth {
-  color: #757575;
-}
-
-.dashboard-content .react-calendar__tile:hover {
-  background-color: #4fc3f7;
-  color: white;
-}
-
-.dashboard-content .react-calendar__tile--now {
-  background-color: #0192C8;
-  color: white;
-}
-
-.dashboard-content .react-calendar__navigation {
+.dashboard-content .weather-temp {
+  font-size: 2.8rem;
+  font-weight: 600;
+  color: #0192C8;
   margin-bottom: 10px;
 }
 
-.dashboard-content .react-calendar__navigation button {
-  color: #333;
-  background: none;
-  border: none;
-  padding: 5px 10px;
+.dashboard-content .weather-description {
+  font-size: 1.2rem;
+  color: #496D9F;
+  font-weight: 500;
+}
+
+.react-calendar {
+  width: 100% !important;
+  border: none !important;
+  background: transparent !important;
+  font-family: 'Inter', Arial, sans-serif !important;
+}
+
+.react-calendar__navigation button {
+  color: #0192C8;
   font-weight: bold;
+  font-size: 1.1rem;
 }
 
-.dashboard-content .react-calendar__navigation button:hover {
-  background-color: #f0f0f0;
-  border-radius: 5px;
+.react-calendar__navigation button:enabled:hover {
+  background-color: rgba(1, 146, 200, 0.1);
 }
 
-.dashboard-content .react-calendar__month-view__weekdays {
-  text-align: center;
+.react-calendar__month-view__weekdays {
+  color: #496D9F;
+  font-weight: bold;
   text-transform: uppercase;
-  font-weight: bold;
   font-size: 0.8em;
-  color: #333;
 }
 
-/* Despensas List */
+.react-calendar__tile {
+  color: #41558A;
+  font-weight: 500;
+  padding: 12px 6px;
+}
+
+.react-calendar__tile:enabled:hover {
+  background-color: rgba(1, 146, 200, 0.1);
+  color: #0192C8;
+}
+
+.react-calendar__tile--active {
+  background: #0192C8 !important;
+  color: white !important;
+  border-radius: 8px;
+}
+
+.react-calendar__tile--now {
+  background: rgba(1, 146, 200, 0.2) !important;
+  color: black !important;
+  font-weight: bold !important;
+  border-radius: 8px;
+}
+
+.react-calendar__month-view__days__day--weekend {
+  color: #2F3F7B;
+}
+
+.react-calendar__month-view__days__day--neighboringMonth {
+  color: #a0aec0;
+}
+
 .dashboard-content .despensa-list {
   list-style: none;
   padding: 0;
@@ -231,7 +220,6 @@
   box-sizing: border-box;
 }
 
-/* Webkit scrollbar styles */
 .dashboard-content .despensa-list::-webkit-scrollbar {
   width: 8px;
 }
@@ -296,9 +284,8 @@
   color: #777;
 }
 
-/* Responsive Design for Smaller Screens */
 @media (max-width: 768px) {
   .dashboard-content .options-container {
-    grid-template-columns: 1fr; /* Stacks buttons in one column for smaller screens */
+    grid-template-columns: 1fr; 
   }
 }

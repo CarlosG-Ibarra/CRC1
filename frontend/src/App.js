@@ -15,6 +15,7 @@ import Administracion from './Components/Administracion.js';
 import AdministracionAlta from './Components/AdministracionAlta.js';
 import AdministracionBaja from './Components/AdministracionBaja.js';
 import AdministracionCon from './Components/AdministracionCon.js';
+import Inventario from './Components/Inventario';
 
 function App() {
     const [user, setUser] = useState(null);
@@ -48,7 +49,8 @@ function App() {
                 <Route path="/map" element={user ? <MapaDeDespensas /> : <Navigate to="/" />} />
                 <Route path="/registre-despensas" element={user ? <RegistroDespensas /> : <Navigate to="/" />} />  
                 <Route path="/vales-consultas" element={user ? <ConsultarVales /> : <Navigate to="/" />} /> 
-                
+                <Route path="/mapa-despensas" element={<MapaDeDespensas />} />
+                <Route path="/inventario" element={<Inventario />} />
 
                 <Route path="/Administracion" element={user?.nivel === 1 ? <Administracion /> : <Navigate to="/" />} />
                 <Route path="/AdministracionAlta" element={user?.nivel === 1 ? <AdministracionAlta /> : <Navigate to="/" />} />

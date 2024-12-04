@@ -14,6 +14,7 @@ import {
   faUserLarge,
   faAddressBook,
   faFileImport,
+  faBoxes,
 } from "@fortawesome/free-solid-svg-icons";
 import Calendar from "react-calendar";
 import "react-calendar/dist/Calendar.css";
@@ -22,13 +23,12 @@ import "./Dashboard.css";
 const Dashboard = () => {
   const [weatherData, setWeatherData] = useState(null);
   const [date, setDate] = useState(new Date());
-  const [despensas, setDespensas] = useState([]);  // Initialize as empty array instead of null
+  const [despensas, setDespensas] = useState([]);  
   const [scrollDirection, setScrollDirection] = useState('down');
   const despensasListRef = useRef(null);
 
-  // Fetch the logged-in user's info from localStorage
   const user = JSON.parse(localStorage.getItem("user"));
-  const nivel = user?.nivel; // Getting the user's level
+  const nivel = user?.nivel; 
 
   useEffect(() => {
     const fetchWeatherData = async () => {
@@ -77,14 +77,13 @@ const Dashboard = () => {
           
           if (scrollDirection === 'down') {
             if (scrollTop + clientHeight >= scrollHeight) {
-              // Reached bottom, change direction
               setScrollDirection('up');
             } else {
               despensasListRef.current.scrollBy({ top: 1, behavior: 'smooth' });
             }
           } else {
             if (scrollTop <= 0) {
-              // Reached top, change direction
+              
               setScrollDirection('down');
             } else {
               despensasListRef.current.scrollBy({ top: -1, behavior: 'smooth' });
@@ -143,7 +142,11 @@ const Dashboard = () => {
           Consulta De Vales
         </Link>
 
-        {/* Conditionally render this link only if nivel is 1 */}
+        <Link to="/inventario" className="option-button-dashboard">
+          <FontAwesomeIcon icon={faBoxes} className="button-icon-dashboard" />
+          Inventario
+        </Link>
+
         {nivel === 1 && (
           <Link to="/Administracion" className="option-button-dashboard">
             <FontAwesomeIcon

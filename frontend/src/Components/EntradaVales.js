@@ -1,5 +1,5 @@
 import React, { useState, useRef } from "react";
-import "./ValesSalida.css"; // Asegúrate de que esta ruta sea correcta
+import "./ValesSalida.css"; 
 import SignatureCanvas from "react-signature-canvas";
 
 function EntradaVales() {
@@ -64,13 +64,12 @@ function EntradaVales() {
     setLoading(true);
 
     try {
-      // Get the signature data
       const Firma1 = signatureRefEntrega.current.toDataURL();
       const Firma2 = signatureRefRecibe.current.toDataURL();
 
       const requestData = {
         ...formData,
-        tipo: "entrada",  // Changed to lowercase to match ENUM value
+        tipo: "entrada",  
         Firma1,
         Firma2
       };
@@ -289,7 +288,7 @@ function EntradaVales() {
                 />
               </label>
               <label className="vale-number-label">
-                Piñatas
+                Pinatas
                 <input
                   type="number"
                   name="Pinatas"

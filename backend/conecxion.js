@@ -483,7 +483,11 @@ app.get("/api/check-delivery", (req, res) => {
 });
 
 // Endpoint para registrar vales
-app.post("/registro_vales", (req, res) => {
+app.post("/registro_vales", async (req, res) => {
+  let firma1Path, firma2Path; // Declare these at the top
+  
+  console.log('Received request body:', req.body); // Add logging
+
   const {
     Fecha,
     Solicitante,
@@ -501,15 +505,30 @@ app.post("/registro_vales", (req, res) => {
     Mesas,
     Sillas,
     Dulces,
-    Piñatas,
+    Pinatas,
     Juguetes,
     Firma1,
     Firma2,
     tipo  
   } = req.body;
 
+  // Promisify the query function
+  const query = (sql, values) => {
+    return new Promise((resolve, reject) => {
+      DB.query(sql, values, (error, results) => {
+        if (error) {
+          console.error('Database error:', error); // Add logging
+          reject(error);
+        } else {
+          console.log('Query results:', results); // Add logging
+          resolve(results);
+        }
+      });
+    });
+  };
+
   try {
-    if (!tipo) {
+    if (!tipo || !['entrada', 'salida'].includes(tipo)) {
       throw new Error("tipo is required and must be either 'entrada' or 'salida'");
     }
 
@@ -521,61 +540,128 @@ app.post("/registro_vales", (req, res) => {
     const firma2FileName = `${Recipiente}_${dateStr}_recibe.png`.replace(/\s+/g, '_');
 
     // Save signature files
-    const firma1Path = path.join(firmasDir, firma1FileName);
-    const firma2Path = path.join(firmasDir, firma2FileName);
+    firma1Path = path.join(firmasDir, firma1FileName);
+    firma2Path = path.join(firmasDir, firma2FileName);
+
+    console.log('Saving signatures to:', { firma1Path, firma2Path }); // Add logging
 
     // Save the base64 data as images
     if (Firma1) {
       const firma1Data = Buffer.from(Firma1.split(',')[1], 'base64');
       fs.writeFileSync(firma1Path, firma1Data);
     }
-    
+
     if (Firma2) {
       const firma2Data = Buffer.from(Firma2.split(',')[1], 'base64');
       fs.writeFileSync(firma2Path, firma2Data);
     }
 
-    const SQL_QUERY =
-      "INSERT INTO registro_vales (fecha_entrega, solicitante, recipiente, dependencia, cantidad_despensas, cantidad_mochilas_primaria, cantidad_mochilas_secundaria, cantidad_mochilas_preparatoria, cantidad_colchonetas, cantidad_aguas, cantidad_botes_pintura, cantidad_botes_impermeabilizante, cantidad_bicicletas, cantidad_mesas, cantidad_sillas, cantidad_dulces, cantidad_piñatas, cantidad_juguetes, firma_entrega, firma_recibe, tipo) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+    // Start transaction
+    console.log('Starting transaction'); // Add logging
+    await query('START TRANSACTION');
 
-    const values = [
-      Fecha || new Date().toISOString().split('T')[0],
-      Solicitante || '',
-      Recipiente || '',
-      Dependencia || '',
-      parseInt(Despensas) || 0,
-      parseInt(MochilaPrimaria) || 0,
-      parseInt(MochilasSecundaria) || 0,
-      parseInt(MochilasPreparatoria) || 0,
-      parseInt(Colchonetas) || 0,
-      parseInt(Aguas) || 0,
-      parseInt(Pintura) || 0,
-      parseInt(Impermeabilizante) || 0,
-      parseInt(Bicicletas) || 0,
-      parseInt(Mesas) || 0,
-      parseInt(Sillas) || 0,
-      parseInt(Dulces) || 0,
-      parseInt(Piñatas) || 0,
-      parseInt(Juguetes) || 0,
-      firma1FileName,
-      firma2FileName,
+    // 1. First, insert the vale into registro_vales
+    const valeData = {
+      fecha_entrega: Fecha,
+      solicitante: Solicitante,
+      recipiente: Recipiente,
+      dependencia: Dependencia,
+      cantidad_despensas: Despensas || 0,
+      cantidad_mochilas_primaria: MochilaPrimaria || 0,
+      cantidad_mochilas_secundaria: MochilasSecundaria || 0,
+      cantidad_mochilas_preparatoria: MochilasPreparatoria || 0,
+      cantidad_colchonetas: Colchonetas || 0,
+      cantidad_aguas: Aguas || 0,
+      cantidad_botes_pintura: Pintura || 0,
+      cantidad_botes_impermeabilizante: Impermeabilizante || 0,
+      cantidad_bicicletas: Bicicletas || 0,
+      cantidad_mesas: Mesas || 0,
+      cantidad_sillas: Sillas || 0,
+      cantidad_dulces: Dulces || 0,
+      Pinatas: Pinatas || 0,
+      cantidad_juguetes: Juguetes || 0,
+      firma_entrega: firma1FileName,
+      firma_recibe: firma2FileName,
       tipo
+    };
+
+    console.log('Inserting vale with data:', valeData); // Add logging
+
+    await query('INSERT INTO registro_vales SET ?', valeData);
+
+    // 2. Update inventory based on vale type
+    const inventoryFields = [
+      'Despensas', 'MochilaPrimaria', 'MochilasSecundaria', 
+      'MochilasPreparatoria', 'Colchonetas', 'Aguas', 'Pintura',
+      'Impermeabilizante', 'Bicicletas', 'Mesas', 'Sillas',
+      'Dulces', 'Pinatas', 'Juguetes'
     ];
 
-    DB.query(SQL_QUERY, values, (err, result) => {
-      if (err) {
-        console.error("Error al registrar el vale:", err);
-        res.status(500).json({ error: "Error al registrar el vale" });
-      } else {
-        res.status(200).json({ 
-          message: "Vale registrado exitosamente",
-          id: result.insertId 
-        });
+    for (const field of inventoryFields) {
+      const quantity = parseInt(req.body[field]) || 0;
+      if (quantity > 0) {
+        if (tipo === 'entrada') {
+          console.log(`Updating inventory for ${field}, adding ${quantity}`); // Add logging
+          await query(
+            `UPDATE inventario 
+             SET ${field} = ${field} + ? 
+             WHERE id = 1`,
+            [quantity]
+          );
+        } else if (tipo === 'salida') {
+          // Check if enough inventory exists
+          const [inventory] = await query(
+            `SELECT ${field} FROM inventario WHERE id = 1`
+          );
+
+          console.log(`Current inventory for ${field}:`, inventory); // Add logging
+
+          if (!inventory || inventory[field] < quantity) {
+            throw new Error(`Inventario insuficiente de ${field}. Disponible: ${inventory ? inventory[field] : 0}`);
+          }
+
+          await query(
+            `UPDATE inventario 
+             SET ${field} = ${field} - ? 
+             WHERE id = 1`,
+            [quantity]
+          );
+        }
       }
+    }
+
+    // If everything succeeded, commit the transaction
+    console.log('Committing transaction'); // Add logging
+    await query('COMMIT');
+    
+    res.json({ 
+      message: `Vale de ${tipo} registrado exitosamente y inventario actualizado`,
+      firma1: firma1FileName,
+      firma2: firma2FileName
     });
+
   } catch (error) {
-    console.error('Error processing vale:', error);
-    res.status(500).json({ error: "Error processing vale: " + error.message });
+    console.error('Error in vale processing:', error); // Add logging
+    // If anything failed, rollback the transaction
+    try {
+      await query('ROLLBACK');
+      console.log('Transaction rolled back'); // Add logging
+    } catch (rollbackError) {
+      console.error('Error during rollback:', rollbackError);
+    }
+
+    // Delete any created signature files
+    try {
+      if (firma1Path && fs.existsSync(firma1Path)) fs.unlinkSync(firma1Path);
+      if (firma2Path && fs.existsSync(firma2Path)) fs.unlinkSync(firma2Path);
+      console.log('Signature files deleted'); // Add logging
+    } catch (deleteError) {
+      console.error('Error deleting signature files:', deleteError);
+    }
+
+    res.status(500).json({ 
+      error: error.message || 'Error al procesar el vale' 
+    });
   }
 });
 
@@ -590,5 +676,19 @@ app.get("/vales", (req, res) => {
     } else {
       res.json(result);
     }
+  });
+});
+
+// Get inventory endpoint
+app.get("/inventario", (req, res) => {
+  const query = "SELECT * FROM inventario";
+  
+  DB.query(query, (err, result) => {
+    if (err) {
+      console.error("Error fetching inventory:", err);
+      res.status(500).json({ error: "Error al obtener el inventario" });
+      return;
+    }
+    res.json(result);
   });
 });

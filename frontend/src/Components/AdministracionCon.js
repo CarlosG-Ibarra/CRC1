@@ -19,7 +19,6 @@ function AdministracionCon() {
     }
   };
 
-  // Filter users based on the search term
   const filteredUsuarios = usuarios.filter((usuario) =>
     usuario.nombre.toLowerCase().includes(searchTerm.toLowerCase())
   );

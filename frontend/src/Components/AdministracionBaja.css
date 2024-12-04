@@ -2,7 +2,7 @@
     padding: 20px;
     margin: 0 auto;
     max-width: 1200px;
-    background-color: #f4f6f8; /* Light background color */
+    background-color: #f4f6f8; /* Color de fondo claro */
   }
   
   #baja-header {
@@ -10,28 +10,28 @@
     margin-bottom: 25px;
     text-align: center;
     font-weight: 600;
-    color: #1d3172; /* Strong blue for the header */
+    color: #1d3172; /* Azul fuerte para el encabezado */
   }
   #baja-search {
     width: 100%;
     padding: 10px;
-    margin-bottom: 20px; /* Space below the search bar */
-    border: 1px solid #ddd; /* Light border for the input */
-    border-radius: 5px; /* Rounded corners */
-    font-size: 1rem; /* Font size for the input */
+    margin-bottom: 20px; /* Espacio debajo de la barra de búsqueda */
+    border: 1px solid #ddd; /* Borde claro para el input */
+    border-radius: 5px; /* Esquinas redondeadas */
+    font-size: 1rem; /* Tamaño de fuente para el input */
   }
   
   
   #baja-table {
     width: 100%;
     border-collapse: collapse;
-    margin-bottom: 30px; /* Space below the table */
+    margin-bottom: 30px; /* Espacio debajo de la tabla */
   }
   
   #baja-table th, #baja-table td {
     padding: 15px;
     text-align: center;
-    border-bottom: 1px solid #ddd; /* Light border for the table rows */
+    border-bottom: 1px solid #ddd; /* Borde claro para las filas de la tabla */
   }
   
   #baja-table th {
@@ -47,11 +47,11 @@
   }
   
   #baja-table tr:nth-child(even) td {
-    background-color: #f0f4f8; /* Alternating row background color */
+    background-color: #f0f4f8; /* Color de fondo para filas alternadas */
   }
   
   #baja-table tr:hover td {
-    background-color: #e0f7fa; /* Hover effect for rows */
+    background-color: #e0f7fa; /* Efecto hover para las filas */
   }
   
   #baja-table td button {
@@ -66,10 +66,10 @@
   }
   
   #baja-table td button:hover {
-    background-color: #d43f3f; /* Darker red on hover */
+    background-color: #d43f3f; /* Rojo más oscuro al pasar el cursor */
   }
   
-  /* For small screens */
+  /* Para pantallas pequeñas */
   @media (max-width: 768px) {
     #baja-header {
       font-size: 2rem;
@@ -84,4 +84,3 @@
       font-size: 0.9rem;
     }
   }
-  

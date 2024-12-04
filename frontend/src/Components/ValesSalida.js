@@ -79,7 +79,7 @@ function Vales() {
         throw new Error(errorData.error || "Error al registrar el vale");
       }
 
-      const data = await response.json();
+      await response.json(); // Just consume the response
       alert("Vale de salida registrado exitosamente");
       resetForm();
       signatureRefEntrega.current.clear();
