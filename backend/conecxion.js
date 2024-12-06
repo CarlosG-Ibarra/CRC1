@@ -578,7 +578,7 @@ app.post("/registro_vales", async (req, res) => {
       cantidad_mesas: Mesas || 0,
       cantidad_sillas: Sillas || 0,
       cantidad_dulces: Dulces || 0,
-      Pinatas: Pinatas || 0,
+      cantidad_pinatas: Pinatas || 0,
       cantidad_juguetes: Juguetes || 0,
       firma_entrega: firma1FileName,
       firma_recibe: firma2FileName,

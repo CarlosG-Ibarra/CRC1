@@ -152,7 +152,7 @@ function Vales() {
         </div>
 
         <div className="vale-form-group">
-          <label htmlFor="recipiente">Nombre de quien recibe:</label>
+          <label htmlFor="recipiente">Nombre de quien entrega:</label>
           <input
             type="text"
             id="recipiente"

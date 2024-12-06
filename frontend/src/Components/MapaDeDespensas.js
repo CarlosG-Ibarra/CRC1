@@ -1,3 +1,4 @@
+// Importaciones necesarias para el componente
 import React, { useState, useEffect } from "react";
 import { useJsApiLoader, GoogleMap, DirectionsRenderer, MarkerF } from "@react-google-maps/api";
 import axios from "axios";
@@ -6,21 +7,28 @@ import "./MapaDeDespensas.css";
 // Definir el array de bibliotecas como una constante fuera del componente
 const GOOGLE_MAPS_LIBRARIES = ['places', 'geometry'];
 
-// Opciones de carga de Google Maps
+// Configuración de la API de Google Maps
 const GOOGLE_MAPS_API_KEY = "";
 
-// Coordenadas del centro de Chihuahua
+// Coordenadas del centro de Chihuahua para inicializar el mapa
 const CHIHUAHUA_CENTER = {
   lat: 28.6353,
   lng: -106.0889
 };
 
+// Estilo del contenedor del mapa
 const mapContainerStyle = {
   width: "100%",
   height: "400px",
 };
 
+/**
+ * Componente MapaDeDespensas
+ * Este componente maneja la visualización y gestión de rutas de entrega de despensas.
+ * Incluye un mapa interactivo, lista de despensas disponibles y seguimiento de entregas.
+ */
 function MapaDeDespensas() {
+  // Inicialización de la API de Google Maps
   const { isLoaded } = useJsApiLoader({
     id: 'google-map-script',
     googleMapsApiKey: GOOGLE_MAPS_API_KEY,
@@ -28,23 +36,28 @@ function MapaDeDespensas() {
     version: 'weekly'
   });
 
-  const [despensas, setDespensas] = useState([]);
+  // Estados del componente
+  const [despensas, setDespensas] = useState([]); // Lista de todas las despensas sin ruta
   const [selectedAddresses, setSelectedAddresses] = useState(() => {
-    // Cargar direcciones guardadas desde localStorage al montar el componente
+    // Recuperar direcciones seleccionadas del almacenamiento local
     const savedAddresses = localStorage.getItem('selectedAddresses');
     return savedAddresses ? JSON.parse(savedAddresses) : [];
   });
-  const [userLocation, setUserLocation] = useState(null);
-  const [directionsResponse] = useState(null);
+  const [userLocation, setUserLocation] = useState(null); // Ubicación actual del usuario
+  const [directionsResponse] = useState(null); // Respuesta de direcciones de Google Maps
   const [routeStarted, setRouteStarted] = useState(() => {
+    // Recuperar estado de la ruta del almacenamiento local
     const savedRouteStarted = localStorage.getItem('routeStarted');
     return savedRouteStarted ? JSON.parse(savedRouteStarted) : false;
   });
-  // Agregar seguimiento de uso
+  
+  // Control de límites de uso de la API de geocodificación
   const [dailyGeocodeCount, setDailyGeocodeCount] = useState(0);
   const DAILY_GEOCODE_LIMIT = 200; // El nivel gratuito permite 300/día, establecemos un límite menor por seguridad
 
-  // Obtiene las despensas con `ruta = 0` al montar el componente
+  /**
+   * Obtiene las despensas con `ruta = 0` al montar el componente
+   */
   useEffect(() => {
     const fetchDespensas = async () => {
       try {
@@ -70,7 +83,9 @@ function MapaDeDespensas() {
     fetchDespensas();
   }, [selectedAddresses]);
 
-  // Solicita la ubicación del usuario
+  /**
+   * Solicita la ubicación del usuario
+   */
   useEffect(() => {
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition((position) => {
@@ -82,7 +97,9 @@ function MapaDeDespensas() {
     }
   }, []);
 
-  // Reiniciar el contador diario a medianoche
+  /**
+   * Reiniciar el contador diario a medianoche
+   */
   useEffect(() => {
     const now = new Date();
     const night = new Date(
@@ -101,17 +118,25 @@ function MapaDeDespensas() {
     return () => clearTimeout(timer);
   }, []);
 
-  // Guardar routeStarted en localStorage cuando cambie
+  /**
+   * Guardar routeStarted en localStorage cuando cambie
+   */
   useEffect(() => {
     localStorage.setItem('routeStarted', JSON.stringify(routeStarted));
   }, [routeStarted]);
 
-  // Guardar direcciones seleccionadas en localStorage cuando cambien
+  /**
+   * Guardar direcciones seleccionadas en localStorage cuando cambien
+   */
   useEffect(() => {
     localStorage.setItem('selectedAddresses', JSON.stringify(selectedAddresses));
   }, [selectedAddresses]);
 
-  // Geocodifica la dirección para obtener las coordenadas
+  /**
+   * Geocodifica una dirección para obtener sus coordenadas
+   * @param {string} address - Dirección a geocodificar
+   * @returns {Object|null} Coordenadas {lat, lng} o null si no se encuentra
+   */
   const geocodeAddress = async (address) => {
     // Verificar el límite diario
     if (dailyGeocodeCount >= DAILY_GEOCODE_LIMIT) {
@@ -176,7 +201,11 @@ function MapaDeDespensas() {
     }
   };
 
-  // Maneja la selección de una despensa
+  /**
+   * Maneja la selección de una despensa de la lista
+   * Obtiene las coordenadas si no existen y actualiza el estado
+   * @param {number} despensaId - ID de la despensa seleccionada
+   */
   const handleSelectDespensa = async (despensaId) => {
     const updatedDespensas = await Promise.all(
       despensas.map(async (despensa) => {
@@ -233,7 +262,11 @@ function MapaDeDespensas() {
     setSelectedAddresses(newSelectedAddresses);
   };
 
-  // Función para manejar el estado de entrega
+  /**
+   * Actualiza el estado de entrega de una despensa
+   * @param {number} id_despensa - ID de la despensa
+   * @param {string} status - Estado de entrega ('delivered' o 'not-delivered')
+   */
   const handleDeliveryStatus = async (id_despensa, status) => {
     try {
       const newRuta = status === 'delivered' ? 2 : 0;
@@ -286,7 +319,10 @@ function MapaDeDespensas() {
     }
   };
 
-  // Inicia la ruta en Google Maps con las direcciones seleccionadas
+  /**
+   * Inicia la ruta en Google Maps con las direcciones seleccionadas
+   * Actualiza el estado de las despensas a 'en ruta'
+   */
   const handleStartRoute = async () => {
     try {
       // Crear una copia de selectedAddresses para actualizar
@@ -342,7 +378,9 @@ function MapaDeDespensas() {
     }
   };
 
-  // Limpia la selección de rutas
+  /**
+   * Limpia la selección actual de rutas
+   */
   const handleClearRoute = () => {
     setDespensas(
       despensas.map((despensa) => ({ ...despensa, selected: false }))
@@ -350,13 +388,15 @@ function MapaDeDespensas() {
     setSelectedAddresses([]);
   };
 
+  // Renderizado condicional mientras se carga el mapa
   if (!isLoaded) {
     return <div>Loading...</div>;
   }
 
+  // Estructura del componente
   return (
     <div className="mapa-despensas">
-      {/* Sección de Rutas Disponibles */}
+      {/* Sección 1: Lista de Despensas No Entregadas */}
       <section className="mapa-despensas__routes">
         <h2>Despensas No Entregadas</h2>
         <div className="mapa-despensas__header-bar">
@@ -387,7 +427,7 @@ function MapaDeDespensas() {
         </ul>
       </section>
 
-      {/* Mapa de Google */}
+      {/* Sección 2: Mapa Interactivo de Google */}
       <section className="mapa-despensas__map">
         <GoogleMap
           mapContainerStyle={mapContainerStyle}
@@ -434,7 +474,7 @@ function MapaDeDespensas() {
         </GoogleMap>
       </section>
 
-      {/* Direcciones Seleccionadas */}
+      {/* Sección 3: Lista de Direcciones Seleccionadas */}
       <section className="mapa-despensas__selected">
         <h3>Direcciones Seleccionadas:</h3>
         <ul className="mapa-despensas__selected-list">
@@ -482,7 +522,7 @@ function MapaDeDespensas() {
         </ul>
       </section>
 
-      {/* Botones de Acción */}
+      {/* Sección 4: Botones de Control de Ruta */}
       <section className="mapa-despensas__actions">
         <button
           onClick={handleStartRoute}
