@@ -23,12 +23,12 @@ import "./Dashboard.css";
 const Dashboard = () => {
   const [weatherData, setWeatherData] = useState(null);
   const [date, setDate] = useState(new Date());
-  const [despensas, setDespensas] = useState([]);  
+  const [despensas, setDespensas] = useState([]);
   const [scrollDirection, setScrollDirection] = useState('down');
   const despensasListRef = useRef(null);
 
   const user = JSON.parse(localStorage.getItem("user"));
-  const nivel = user?.nivel; 
+  const nivel = user?.nivel;
 
   useEffect(() => {
     const fetchWeatherData = async () => {
@@ -52,15 +52,15 @@ const Dashboard = () => {
     const fetchDespensas = async () => {
       try {
         const response = await fetch(
-          "http://localhost:3001/despensas/sin-ruta"
+          "http://localhost:3001/registros/sin-ruta"
         );
         if (!response.ok) {
-          throw new Error("Error al obtener despensas");
+          throw new Error("Error al obtener registros");
         }
         const data = await response.json();
         setDespensas(data);
       } catch (error) {
-        console.error("Error al obtener despensas:", error);
+        console.error("Error al obtener registros:", error);
         setDespensas([]);
       }
     };
@@ -199,7 +199,7 @@ const Dashboard = () => {
           {despensas.length === 0 ? (
             <p>No hay despensas para hoy.</p>
           ) : (
-            <ul 
+            <ul
               className="despensa-list"
               ref={despensasListRef}
               onMouseEnter={() => {

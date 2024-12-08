@@ -1,12 +1,21 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import './Login.css';
 import axios from 'axios';
+import { authService } from '../utils/auth';
 
 function Login({ onLogin }) {
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
     const [errorMessage, setErrorMessage] = useState('');
     const [loading, setLoading] = useState(false);
+
+    useEffect(() => {
+        // Verificar si hay una sesión activa al cargar el componente
+        const user = authService.getUser();
+        if (user) {
+            onLogin(user);
+        }
+    }, [onLogin]);
 
     const handleLogin = async (e) => {
         e.preventDefault();
@@ -15,10 +24,19 @@ function Login({ onLogin }) {
         try {
             const response = await axios.post('http://localhost:3001/login', {
                 email: username,
-                pass: password, // Cambiar 'password' a 'pass' para consistencia con el backend
+                pass: password,
             });
 
             if (response.status === 200) {
+                // Guardar información del usuario
+                authService.setUser(response.data.user);
+                
+                // Iniciar el temporizador de inactividad
+                authService.startInactivityTimer(() => {
+                    authService.logout();
+                    window.location.reload(); // Recargar la página para mostrar el login
+                });
+
                 onLogin(response.data.user);
             }
         } catch (error) {

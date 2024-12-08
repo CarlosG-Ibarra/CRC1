@@ -3,6 +3,7 @@ import './RegistroDespensas.css';
 
 function RegistroDespensas() {
   const [formData, setFormData] = useState({
+    id_registro: null,
     nombre: '',
     calle: '',
     numero: '',
@@ -22,14 +23,23 @@ function RegistroDespensas() {
     const { name, value } = e.target;
     
     if (name === 'nombre') {
-      // Reset the finalized flag and clear the timer when typing
       setIsNameFinalized(false);
       clearTimeout(debounceTimer.current);
 
-      // Debounce the name input
       debounceTimer.current = setTimeout(() => {
         setDebouncedName(value);
       }, 200);
+    }
+
+    // Handle telephone number input
+    if (name === 'telefono') {
+      // Only allow numbers and limit to 10 digits
+      const numericValue = value.replace(/\D/g, '').slice(0, 10);
+      setFormData({
+        ...formData,
+        [name]: numericValue
+      });
+      return;
     }
 
     setFormData({
@@ -41,12 +51,11 @@ function RegistroDespensas() {
   useEffect(() => {
     if (debouncedName.length > 2 && !isNameFinalized) {
       setIsLoading(true);
-      console.log("Fetching data for:", debouncedName);
 
-      fetch(`http://localhost:3001/api/check-delivery?nombre=${debouncedName}`)
+      // Buscar primero en la tabla Registros
+      fetch(`http://localhost:3001/api/check-registros?nombre=${debouncedName}`)
         .then((response) => response.json())
         .then((data) => {
-          console.log("Response data:", data);
           setSuggestions(Array.isArray(data) ? data : []);
           setIsLoading(false);
         })
@@ -61,16 +70,16 @@ function RegistroDespensas() {
   }, [debouncedName, isNameFinalized]);
 
   const handleSuggestionSelect = (suggestion) => {
-    setFormData((prevData) => ({
-      ...prevData,
+    setFormData({
+      id_registro: suggestion.id_registro,
       nombre: suggestion.nombre_solicitante,
       calle: suggestion.calle,
       numero: suggestion.numero,
       colonia: suggestion.colonia,
       cp: suggestion.cp,
-      telefono: suggestion.tel,
+      telefono: suggestion.tel ? suggestion.tel.toString() : '',
       zona: suggestion.zona
-    }));
+    });
     
     setSuggestions([]);
     setIsNameFinalized(true);
@@ -78,10 +87,9 @@ function RegistroDespensas() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log(formData); // Add this line to check the form data
     try {
       const response = await fetch('http://localhost:3001/registro-despensas', {
-        method: 'POST',
+        method: 'POST',  // Always use POST for both create and update
         headers: {
           'Content-Type': 'application/json',
         },
@@ -90,25 +98,25 @@ function RegistroDespensas() {
 
       if (response.ok) {
         const data = await response.json();
-        console.log('Registro exitoso:', data);
+        
         // Clear form
         setFormData({
+          id_registro: null,
           nombre: '',
           calle: '',
           numero: '',
           colonia: '',
           cp: '',
           telefono: '',
-          zona :''
+          zona: ''
         });
-        alert('Registro exitoso');
+        
+        alert(formData.id_registro ? 'Actualización exitosa' : 'Registro exitoso');
       } else {
         const errorData = await response.json();
-        console.error('Error en el registro:', errorData.message);
         alert(`Error: ${errorData.message}`);
       }
     } catch (error) {
-      console.error('Error en la conexión:', error);
       alert('Error en la conexión, intente más tarde.');
     }
   };
@@ -132,7 +140,7 @@ function RegistroDespensas() {
               <ul className="suggestions-list">
                 {suggestions.map((suggestion) => (
                   <li
-                    key={suggestion.id_despensa}
+                    key={suggestion.id_registro}
                     onClick={() => handleSuggestionSelect(suggestion)}
                   >
                     {suggestion.nombre_solicitante}
@@ -190,11 +198,14 @@ function RegistroDespensas() {
         <div className="registro-despensas-form-group">
           <label htmlFor="telefono">Teléfono</label>
           <input
-            type="text"
+            type="tel"
             id="telefono"
             name="telefono"
             value={formData.telefono}
             onChange={handleChange}
+            pattern="[0-9]*"
+            maxLength="10"
+            placeholder="10 dígitos"
             required
           />
         </div>
@@ -209,7 +220,7 @@ function RegistroDespensas() {
             required
           />
         </div>
-        <button type="submit" className="registro-despensas-submit-button">Registrar</button>
+        <button type="submit" className="registro-despensas-submit-button">{formData.id_registro ? 'Actualizar' : 'Registrar'}</button>
       </form>
     </div>
   );

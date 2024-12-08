@@ -8,7 +8,7 @@ import "./MapaDeDespensas.css";
 const GOOGLE_MAPS_LIBRARIES = ['places', 'geometry'];
 
 // Configuración de la API de Google Maps
-const GOOGLE_MAPS_API_KEY = "";
+const GOOGLE_MAPS_API_KEY = "AIzaSyAkE1Y9e8WFfw_f7LUrNow1_xouN3ADxUM";
 
 // Coordenadas del centro de Chihuahua para inicializar el mapa
 const CHIHUAHUA_CENTER = {
@@ -37,7 +37,7 @@ function MapaDeDespensas() {
   });
 
   // Estados del componente
-  const [despensas, setDespensas] = useState([]); // Lista de todas las despensas sin ruta
+  const [registros, setRegistros] = useState([]); // Lista de todos los registros sin ruta
   const [selectedAddresses, setSelectedAddresses] = useState(() => {
     // Recuperar direcciones seleccionadas del almacenamiento local
     const savedAddresses = localStorage.getItem('selectedAddresses');
@@ -56,31 +56,31 @@ function MapaDeDespensas() {
   const DAILY_GEOCODE_LIMIT = 200; // El nivel gratuito permite 300/día, establecemos un límite menor por seguridad
 
   /**
-   * Obtiene las despensas con `ruta = 0` al montar el componente
+   * Obtiene los registros con `ruta = 0` al montar el componente
    */
   useEffect(() => {
-    const fetchDespensas = async () => {
+    const fetchRegistros = async () => {
       try {
         const response = await fetch(
-          "http://localhost:3001/despensas/sin-ruta"
+          "http://localhost:3001/registros/sin-ruta"
         );
         if (!response.ok) {
-          throw new Error("Error al obtener despensas");
+          throw new Error("Error al obtener registros");
         }
         const data = await response.json();
         
-        // Marcar despensas como seleccionadas si están en selectedAddresses
-        const updatedDespensas = data.map(despensa => ({
-          ...despensa,
-          selected: selectedAddresses.some(addr => addr.id_despensa === despensa.id_despensa)
+        // Marcar registros como seleccionados si están en selectedAddresses
+        const updatedRegistros = data.map(registro => ({
+          ...registro,
+          selected: selectedAddresses.some(addr => addr.id_registro === registro.id_registro)
         }));
         
-        setDespensas(updatedDespensas);
+        setRegistros(updatedRegistros);
       } catch (error) {
-        setDespensas([]);
+        setRegistros([]);
       }
     };
-    fetchDespensas();
+    fetchRegistros();
   }, [selectedAddresses]);
 
   /**
@@ -88,12 +88,31 @@ function MapaDeDespensas() {
    */
   useEffect(() => {
     if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition((position) => {
+      const options = {
+        enableHighAccuracy: true,
+        timeout: 5000,
+        maximumAge: 0
+      };
+
+      const success = (position) => {
         setUserLocation({
           lat: position.coords.latitude,
           lng: position.coords.longitude,
         });
-      });
+      };
+
+      const error = (err) => {
+        console.warn(`ERROR(${err.code}): ${err.message}`);
+        // If geolocation fails, default to Chihuahua center
+        setUserLocation(CHIHUAHUA_CENTER);
+        alert("No se pudo obtener tu ubicación exacta. Usando ubicación predeterminada de Chihuahua.");
+      };
+
+      navigator.geolocation.getCurrentPosition(success, error, options);
+    } else {
+      // Browser doesn't support Geolocation
+      setUserLocation(CHIHUAHUA_CENTER);
+      alert("Tu navegador no soporta geolocalización. Usando ubicación predeterminada de Chihuahua.");
     }
   }, []);
 
@@ -202,84 +221,84 @@ function MapaDeDespensas() {
   };
 
   /**
-   * Maneja la selección de una despensa de la lista
+   * Maneja la selección de un registro de la lista
    * Obtiene las coordenadas si no existen y actualiza el estado
-   * @param {number} despensaId - ID de la despensa seleccionada
+   * @param {number} registroId - ID del registro seleccionado
    */
-  const handleSelectDespensa = async (despensaId) => {
-    const updatedDespensas = await Promise.all(
-      despensas.map(async (despensa) => {
-        if (despensa.id_despensa === despensaId) {
-          // Verificar si ya tenemos coordenadas para esta despensa
-          const existingAddress = selectedAddresses.find(addr => addr.id_despensa === despensaId);
+  const handleSelectRegistro = async (registroId) => {
+    const updatedRegistros = await Promise.all(
+      registros.map(async (registro) => {
+        if (registro.id_registro === registroId) {
+          // Verificar si ya tenemos coordenadas para este registro
+          const existingAddress = selectedAddresses.find(addr => addr.id_registro === registroId);
           if (existingAddress?.coordinates) {
             return {
-              ...despensa,
-              selected: !despensa.selected,
+              ...registro,
+              selected: !registro.selected,
               coordinates: existingAddress.coordinates,
               addressNotFound: existingAddress.addressNotFound
             };
           }
 
-          if (!despensa.coordinates) {
+          if (!registro.coordinates) {
             // Formatear la dirección con más cuidado
-            const streetAddress = despensa.numero ? 
-              `${despensa.calle} ${despensa.numero}` : 
-              despensa.calle;
+            const streetAddress = registro.numero ? 
+              `${registro.calle} ${registro.numero}` : 
+              registro.calle;
             
             const addressParts = [streetAddress];
-            if (despensa.colonia) {
-              addressParts.push(despensa.colonia);
+            if (registro.colonia) {
+              addressParts.push(registro.colonia);
             }
             
             const addressString = addressParts.join(', ');
             const coords = await geocodeAddress(addressString);
             
             return {
-              ...despensa,
-              selected: !despensa.selected,
+              ...registro,
+              selected: !registro.selected,
               coordinates: coords,
               addressNotFound: coords === null
             };
           } else {
-            return { ...despensa, selected: !despensa.selected };
+            return { ...registro, selected: !registro.selected };
           }
         }
-        return despensa;
+        return registro;
       })
     );
-    setDespensas(updatedDespensas);
+    setRegistros(updatedRegistros);
     
     // Actualizar selectedAddresses mientras se preservan las coordenadas existentes
-    const newSelectedAddresses = updatedDespensas
-      .filter((despensa) => despensa.selected)
-      .map(despensa => ({
-        ...despensa,
-        coordinates: despensa.coordinates || 
-          selectedAddresses.find(addr => addr.id_despensa === despensa.id_despensa)?.coordinates
+    const newSelectedAddresses = updatedRegistros
+      .filter((registro) => registro.selected)
+      .map(registro => ({
+        ...registro,
+        coordinates: registro.coordinates || 
+          selectedAddresses.find(addr => addr.id_registro === registro.id_registro)?.coordinates
       }));
     
     setSelectedAddresses(newSelectedAddresses);
   };
 
   /**
-   * Actualiza el estado de entrega de una despensa
-   * @param {number} id_despensa - ID de la despensa
+   * Actualiza el estado de entrega de un registro
+   * @param {number} id_registro - ID del registro
    * @param {string} status - Estado de entrega ('delivered' o 'not-delivered')
    */
-  const handleDeliveryStatus = async (id_despensa, status) => {
+  const handleDeliveryStatus = async (id_registro, status) => {
     try {
       const newRuta = status === 'delivered' ? 2 : 0;
       
       const response = await fetch(
-        "http://localhost:3001/despensa/actualizar-ruta",
+        "http://localhost:3001/registro/actualizar-ruta",
         {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
           },
           body: JSON.stringify({ 
-            id_despensa: id_despensa,
+            id_registro: id_registro,
             ruta: newRuta 
           }),
         }
@@ -291,26 +310,26 @@ function MapaDeDespensas() {
 
       // Actualizar estados locales
       // 1. Eliminar de selectedAddresses
-      setSelectedAddresses(prev => prev.filter(addr => addr.id_despensa !== id_despensa));
+      setSelectedAddresses(prev => prev.filter(addr => addr.id_registro !== id_registro));
       
-      // 2. Actualizar lista de despensas
-      setDespensas(prev => prev.filter(desp => desp.id_despensa !== id_despensa));
+      // 2. Actualizar lista de registros
+      setRegistros(prev => prev.filter(reg => reg.id_registro !== id_registro));
 
       // 3. Si no hay más direcciones seleccionadas, reiniciar routeStarted
-      const remainingAddresses = selectedAddresses.filter(addr => addr.id_despensa !== id_despensa);
+      const remainingAddresses = selectedAddresses.filter(addr => addr.id_registro !== id_registro);
       if (remainingAddresses.length === 0) {
         setRouteStarted(false);
         localStorage.setItem('routeStarted', 'false');
       }
 
-      // 4. Actualizar la lista de despensas si se marca como no entregada
+      // 4. Actualizar la lista de registros si se marca como no entregada
       if (status === 'not-delivered') {
-        const fetchResponse = await fetch("http://localhost:3001/despensas/sin-ruta");
+        const fetchResponse = await fetch("http://localhost:3001/registros/sin-ruta");
         if (!fetchResponse.ok) {
-          throw new Error("Error al actualizar la lista de despensas");
+          throw new Error("Error al actualizar la lista de registros");
         }
         const newData = await fetchResponse.json();
-        setDespensas(newData);
+        setRegistros(newData);
       }
       
     } catch (error) {
@@ -321,24 +340,24 @@ function MapaDeDespensas() {
 
   /**
    * Inicia la ruta en Google Maps con las direcciones seleccionadas
-   * Actualiza el estado de las despensas a 'en ruta'
+   * Actualiza el estado de los registros a 'en ruta'
    */
   const handleStartRoute = async () => {
     try {
       // Crear una copia de selectedAddresses para actualizar
       const updatedAddresses = [...selectedAddresses];
 
-      // Actualizar la ruta a 1 (en progreso) para cada despensa seleccionada
+      // Actualizar la ruta a 1 (en progreso) para cada registro seleccionado
       for (const address of selectedAddresses) {
         const response = await fetch(
-          "http://localhost:3001/despensa/actualizar-ruta",
+          "http://localhost:3001/registro/actualizar-ruta",
           {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
             },
             body: JSON.stringify({ 
-              id_despensa: address.id_despensa,
+              id_registro: address.id_registro,
               ruta: 1 
             }),
           }
@@ -349,7 +368,7 @@ function MapaDeDespensas() {
         }
 
         // Actualizar la dirección en nuestro estado local
-        const index = updatedAddresses.findIndex(addr => addr.id_despensa === address.id_despensa);
+        const index = updatedAddresses.findIndex(addr => addr.id_registro === address.id_registro);
         if (index !== -1) {
           updatedAddresses[index] = { ...updatedAddresses[index], ruta: 1 };
         }
@@ -382,8 +401,8 @@ function MapaDeDespensas() {
    * Limpia la selección actual de rutas
    */
   const handleClearRoute = () => {
-    setDespensas(
-      despensas.map((despensa) => ({ ...despensa, selected: false }))
+    setRegistros(
+      registros.map((registro) => ({ ...registro, selected: false }))
     );
     setSelectedAddresses([]);
   };
@@ -396,32 +415,32 @@ function MapaDeDespensas() {
   // Estructura del componente
   return (
     <div className="mapa-despensas">
-      {/* Sección 1: Lista de Despensas No Entregadas */}
+      {/* Sección 1: Lista de Registros No Entregados */}
       <section className="mapa-despensas__routes">
-        <h2>Despensas No Entregadas</h2>
+        <h2>Registros No Entregados</h2>
         <div className="mapa-despensas__header-bar">
           <span className="header-item">Nombre</span>
           <span className="header-item">Colonia</span>
           <span className="header-item">Zona</span>
         </div>
         <ul>
-          {despensas
-            .filter((despensa) => !despensa.selected)
-            .map((despensa) => (
+          {registros
+            .filter((registro) => !registro.selected)
+            .map((registro) => (
               <li
-                key={despensa.id_despensa}
-                onClick={() => handleSelectDespensa(despensa.id_despensa)}
-                className={`despensa-item ${
-                  despensa.selected ? "selected" : ""
+                key={registro.id_registro}
+                onClick={() => handleSelectRegistro(registro.id_registro)}
+                className={`registro-item ${
+                  registro.selected ? "selected" : ""
                 }`}
               >
-                <span className="despensa-item__nombre">
-                  {despensa.nombre_solicitante}
+                <span className="registro-item__nombre">
+                  {registro.nombre_solicitante}
                 </span>
-                <span className="despensa-item__colonia">
-                  {despensa.colonia}
+                <span className="registro-item__colonia">
+                  {registro.colonia}
                 </span>
-                <span className="despensa-item__zona">{despensa.zona}</span>
+                <span className="registro-item__zona">{registro.zona}</span>
               </li>
             ))}
         </ul>
@@ -460,7 +479,7 @@ function MapaDeDespensas() {
             .filter((address) => address.coordinates && !address.addressNotFound)
             .map((address) => (
               <MarkerF
-                key={address.id_despensa}
+                key={address.id_registro}
                 position={address.coordinates}
                 title={`${address.nombre_solicitante} - ${address.calle} ${address.numero}, ${address.colonia}`}
                 icon={{
@@ -480,7 +499,7 @@ function MapaDeDespensas() {
         <ul className="mapa-despensas__selected-list">
           {selectedAddresses.map((address) => (
             <li
-              key={address.id_despensa}
+              key={address.id_registro}
               className="mapa-despensas__selected-item"
             >
               <div className="address-info">
@@ -505,13 +524,13 @@ function MapaDeDespensas() {
                 <div className="delivery-buttons">
                   <button
                     className="btn-delivered"
-                    onClick={() => handleDeliveryStatus(address.id_despensa, 'delivered')}
+                    onClick={() => handleDeliveryStatus(address.id_registro, 'delivered')}
                   >
                     Entregada
                   </button>
                   <button
                     className="btn-not-delivered"
-                    onClick={() => handleDeliveryStatus(address.id_despensa, 'not-delivered')}
+                    onClick={() => handleDeliveryStatus(address.id_registro, 'not-delivered')}
                   >
                     No Entregada
                   </button>

@@ -63,6 +63,7 @@ const EntregarDespensas = () => {
     renta: "",
     alimentacion: "",
     escuela: "",
+    internet: "",
     total: "",
 
     // Belongings
@@ -86,8 +87,8 @@ const EntregarDespensas = () => {
     return filename.slice(((filename.lastIndexOf(".") - 1) >>> 0) + 1);
   };
 
-  const [suggestions, setSuggestions] = useState([]); 
-  const [debouncedName, setDebouncedName] = useState(""); 
+  const [suggestions, setSuggestions] = useState([]);
+  const [debouncedName, setDebouncedName] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [isNameFinalized, setIsNameFinalized] = useState(false);
   const debounceTimer = useRef(null);
@@ -153,7 +154,6 @@ const EntregarDespensas = () => {
   useEffect(() => {
     if (debouncedName.length > 2 && !isNameFinalized) {
       setIsLoading(true);
-      
 
       fetch(`http://localhost:3001/api/check-delivery?nombre=${debouncedName}`)
         .then((response) => response.json())
@@ -172,74 +172,139 @@ const EntregarDespensas = () => {
   }, [debouncedName, isNameFinalized]);
 
   const handleSuggestionSelect = (suggestion) => {
-    setFormData((prevData) => ({
-      ...prevData,
-      nombreSolicitante: suggestion.nombre_solicitante,
-      motivo: suggestion.motivo,
-      edad: suggestion.edad,
-      colonia: suggestion.colonia,
-      calle: suggestion.calle,
-      numero: suggestion.numero,
-      tel: suggestion.tel,
-      zona: suggestion.zona,
-      cp: suggestion.cp,
-      sexo: suggestion.sexo,
-      genero: suggestion.genero,
-      escolaridad: suggestion.escolaridad,
-      ocupacion: suggestion.ocupacion,
-      estadoCivil: suggestion.estado_civil,
+    // Base fields that exist in both tables
+    const baseFields = {
+      nombreSolicitante: suggestion.nombre_solicitante || "",
+      colonia: suggestion.colonia || "",
+      calle: suggestion.calle || "",
+      numero: suggestion.numero || "",
+      tel: suggestion.tel || "",
+      zona: suggestion.zona || "",
+      cp: suggestion.cp || "",
+    };
 
-      nombre1: suggestion.nombre_1,
-      sexoIntegrante1: suggestion.sexo_integrante_1,
-      parentesco1: suggestion.parentesco_1,
-      edadIntegrante1: suggestion.edad_integrante_1,
-      estadoCivilIntegrante1: suggestion.estado_civil_integrante_1,
-      ocupacionIntegrante1: suggestion.ocupacion_integrante_1,
-      escolaridadIntegrante1: suggestion.escolaridad_integrante_1,
-      ingresoSol1: suggestion.ingreso_sol1,
+    if (suggestion.source === "estudio_socioeconomico") {
+      // If data comes from estudio_socioeconomico, fill all fields
+      setFormData((prev) => ({
+        ...prev,
+        ...baseFields,
+        motivo: suggestion.motivo || "",
+        edad: suggestion.edad || "",
+        sexo: suggestion.sexo || "",
+        genero: suggestion.genero || "",
+        escolaridad: suggestion.escolaridad || "",
+        ocupacion: suggestion.ocupacion || "",
+        estadoCivil: suggestion.estado_civil || "",
+        nombre1: suggestion.nombre_1 || "",
+        sexoIntegrante1: suggestion.sexo_integrante_1 || "",
+        parentesco1: suggestion.parentesco_1 || "",
+        edadIntegrante1: suggestion.edad_integrante_1 || "",
+        estadoCivilIntegrante1: suggestion.estado_civil_integrante_1 || "",
+        ocupacionIntegrante1: suggestion.ocupacion_integrante_1 || "",
+        escolaridadIntegrante1: suggestion.escolaridad_integrante_1 || "",
+        ingresoSol1: suggestion.ingreso_sol1 || "",
+        nombre2: suggestion.nombre_2 || "",
+        sexoIntegrante2: suggestion.sexo_integrante_2 || "",
+        parentesco2: suggestion.parentesco_2 || "",
+        edadIntegrante2: suggestion.edad_integrante_2 || "",
+        estadoCivilIntegrante2: suggestion.estado_civil_integrante_2 || "",
+        ocupacionIntegrante2: suggestion.ocupacion_integrante_2 || "",
+        escolaridadIntegrante2: suggestion.escolaridad_integrante_2 || "",
+        ingresoSol2: suggestion.ingreso_sol2 || "",
+        nombre3: suggestion.nombre_3 || "",
+        sexoIntegrante3: suggestion.sexo_integrante_3 || "",
+        parentesco3: suggestion.parentesco_3 || "",
+        edadIntegrante3: suggestion.edad_integrante_3 || "",
+        estadoCivilIntegrante3: suggestion.estado_civil_integrante_3 || "",
+        ocupacionIntegrante3: suggestion.ocupacion_integrante_3 || "",
+        escolaridadIntegrante3: suggestion.escolaridad_integrante_3 || "",
+        ingresoSol3: suggestion.ingreso_sol3 || "",
+        // Add these economic data fields
+        ingreso_mensual: suggestion.ingreso_mensual || "",
+        aportacion: suggestion.aportacion || "",
+        luz: suggestion.luz || "",
+        agua: suggestion.agua || "",
+        telefono: suggestion.telefono || "",
+        creditos: suggestion.creditos || "",
+        gas: suggestion.gas || "",
+        medicinas: suggestion.medicinas || "",
+        transporte: suggestion.transporte || "",
+        television: suggestion.television || "",
+        renta: suggestion.renta || "",
+        alimentacion: suggestion.alimentacion || "",
+        escuela: suggestion.escuela || "",
+        internet: suggestion.internet || "",
+        total: suggestion.total || "",
 
-      nombre2: suggestion.nombre_2,
-      sexoIntegrante2: suggestion.sexo_integrante_2,
-      parentesco2: suggestion.parentesco_2,
-      edadIntegrante2: suggestion.edad_integrante_2,
-      estadoCivilIntegrante2: suggestion.estado_civil_integrante_2,
-      ocupacionIntegrante2: suggestion.ocupacion_integrante_2,
-      escolaridadIntegrante2: suggestion.escolaridad_integrante_2,
-      ingresoSol2: suggestion.ingreso_sol2,
+        // Add these housing information fields
+        vehiculo: suggestion.vehiculo || "",
+        situacionLegal: suggestion.situacionLegal || "",
+        materialParedes: suggestion.materialParedes || "",
+        materialTecho: suggestion.materialTecho || "",
+        materialPiso: suggestion.materialPiso || "",
+        numCuartos: suggestion.numCuartos || "",
+        nivelSocioEconomico: suggestion.nivelSocioEconomico || "",
+      }));
+    } else {
+      // If data comes from Registros, only set the base fields and clear everything else
+      setFormData({
+        ...baseFields,
+        motivo: "",
+        edad: "",
+        sexo: "",
+        genero: "",
+        escolaridad: "",
+        ocupacion: "",
+        estadoCivil: "",
+        nombre1: "",
+        sexoIntegrante1: "",
+        parentesco1: "",
+        edadIntegrante1: "",
+        estadoCivilIntegrante1: "",
+        ocupacionIntegrante1: "",
+        escolaridadIntegrante1: "",
+        ingresoSol1: "",
+        nombre2: "",
+        sexoIntegrante2: "",
+        parentesco2: "",
+        edadIntegrante2: "",
+        estadoCivilIntegrante2: "",
+        ocupacionIntegrante2: "",
+        escolaridadIntegrante2: "",
+        ingresoSol2: "",
+        nombre3: "",
+        sexoIntegrante3: "",
+        parentesco3: "",
+        edadIntegrante3: "",
+        estadoCivilIntegrante3: "",
+        ocupacionIntegrante3: "",
+        escolaridadIntegrante3: "",
+        ingresoSol3: "",
+        ingreso_mensual: "",
+        aportacion: "",
+        luz: "",
+        agua: "",
+        telefono: "",
+        creditos: "",
+        gas: "",
+        medicinas: "",
+        transporte: "",
+        television: "",
+        renta: "",
+        alimentacion: "",
+        escuela: "",
+        internet: "",
+        total: "",
+        vehiculo: "",
+        situacionLegal: "",
+        materialParedes: "",
+        materialTecho: "",
+        materialPiso: "",
+        numCuartos: "",
+        nivelSocioEconomico: ""
+      });
+    }
 
-      nombre3: suggestion.nombre_3,
-      sexoIntegrante3: suggestion.sexo_integrante_3,
-      parentesco3: suggestion.parentesco_3,
-      edadIntegrante3: suggestion.edad_integrante_3,
-      estadoCivilIntegrante3: suggestion.estado_civil_integrante_3,
-      ocupacionIntegrante3: suggestion.ocupacion_integrante_3,
-      escolaridadIntegrante3: suggestion.escolaridad_integrante_3,
-      ingresoSol3: suggestion.ingreso_sol3,
-
-      ingreso_mensual: suggestion.ingreso_mensual,
-      aportacion: suggestion.aportacion,
-      luz: suggestion.luz,
-      agua: suggestion.agua,
-      telefono: suggestion.telefono,
-      creditos: suggestion.creditos,
-      gas: suggestion.gas,
-      medicinas: suggestion.medicinas,
-      transporte: suggestion.transporte,
-      television: suggestion.television,
-      renta: suggestion.renta,
-      alimentacion: suggestion.alimentacion,
-      escuela: suggestion.escuela,
-      internet: suggestion.internet,
-      total: suggestion.total,
-
-      vehiculo: suggestion.vehiculo,
-      situacionLegal: suggestion.situacionLegal,
-      materialParedes: suggestion.materialParedes,
-      materialTecho: suggestion.materialTecho,
-      materialPiso: suggestion.materialPiso,
-      numCuartos: suggestion.numCuartos,
-      nivelSocioEconomico: suggestion.nivelSocioEconomico,
-    }));
     setIsNameFinalized(true);
     setSuggestions([]);
   };
@@ -421,9 +486,9 @@ const EntregarDespensas = () => {
         edad: "",
         sexo: "",
         genero: "",
-        estadoCivil: "",
         escolaridad: "",
         ocupacion: "",
+        estadoCivil: "",
         fechaRegistro: "",
 
         nombre1: "",
@@ -496,11 +561,12 @@ const EntregarDespensas = () => {
   return (
     <div className="entregar-despensas-container">
       <h1>Formulario de Estudio Socioeconómico</h1>
-      <form onSubmit={(e) => {
-      e.preventDefault();
-      handleSubmit(e);
-    }}>
-      
+      <form
+        onSubmit={(e) => {
+          e.preventDefault();
+          handleSubmit(e);
+        }}
+      >
         <section className="entregar-despensas-section estudio-socioeconomico">
           <h2>Estudio Socioeconómico</h2>
 
@@ -554,7 +620,7 @@ const EntregarDespensas = () => {
                   id="motivo"
                   name="motivo"
                   value={formData.motivo}
-                  onChange={handleChange} 
+                  onChange={handleChange}
                   required
                 />
               </div>
@@ -566,7 +632,7 @@ const EntregarDespensas = () => {
                   id="fechaRegistro"
                   name="fechaRegistro"
                   value={formData.fechaRegistro}
-                  onChange={handleChange} 
+                  onChange={handleChange}
                   required
                 />
               </div>
@@ -580,7 +646,7 @@ const EntregarDespensas = () => {
                   id="calle"
                   name="calle"
                   value={formData.calle}
-                  onChange={handleChange} 
+                  onChange={handleChange}
                   required
                 />
               </div>
@@ -592,7 +658,7 @@ const EntregarDespensas = () => {
                   id="numero"
                   name="numero"
                   value={formData.numero}
-                  onChange={handleChange} 
+                  onChange={handleChange}
                   required
                 />
               </div>
@@ -604,7 +670,7 @@ const EntregarDespensas = () => {
                   id="colonia"
                   name="colonia"
                   value={formData.colonia}
-                  onChange={handleChange} 
+                  onChange={handleChange}
                   required
                 />
               </div>
@@ -616,7 +682,7 @@ const EntregarDespensas = () => {
                   id="cp"
                   name="cp"
                   value={formData.cp}
-                  onChange={handleChange} 
+                  onChange={handleChange}
                   required
                 />
               </div>
@@ -630,7 +696,7 @@ const EntregarDespensas = () => {
                   id="tel"
                   name="tel"
                   value={formData.tel}
-                  onChange={handleChange} 
+                  onChange={handleChange}
                   required
                 />
               </div>
@@ -642,7 +708,7 @@ const EntregarDespensas = () => {
                   id="zona"
                   name="zona"
                   value={formData.zona}
-                  onChange={handleChange} 
+                  onChange={handleChange}
                   required
                 />
               </div>
@@ -656,7 +722,7 @@ const EntregarDespensas = () => {
                   id="edad"
                   name="edad"
                   value={formData.edad}
-                  onChange={handleChange} 
+                  onChange={handleChange}
                   required
                 />
               </div>
@@ -668,7 +734,7 @@ const EntregarDespensas = () => {
                   id="escolaridad"
                   name="escolaridad"
                   value={formData.escolaridad}
-                  onChange={handleChange} 
+                  onChange={handleChange}
                   required
                 />
               </div>
@@ -680,7 +746,7 @@ const EntregarDespensas = () => {
                   id="ocupacion"
                   name="ocupacion"
                   value={formData.ocupacion}
-                  onChange={handleChange} 
+                  onChange={handleChange}
                   required
                 />
               </div>
@@ -692,7 +758,7 @@ const EntregarDespensas = () => {
                   id="estadoCivil"
                   name="estadoCivil"
                   value={formData.estadoCivil}
-                  onChange={handleChange} 
+                  onChange={handleChange}
                   required
                 />
               </div>
@@ -706,7 +772,7 @@ const EntregarDespensas = () => {
                   id="sexo"
                   name="sexo"
                   value={formData.sexo}
-                  onChange={handleChange} 
+                  onChange={handleChange}
                   required
                 >
                   <option value="" disabled>
@@ -724,7 +790,7 @@ const EntregarDespensas = () => {
                   id="genero"
                   name="genero"
                   value={formData.genero}
-                  onChange={handleChange} 
+                  onChange={handleChange}
                   required
                 >
                   <option value="" disabled>
@@ -754,7 +820,6 @@ const EntregarDespensas = () => {
                   name="nombre1"
                   value={formData.nombre1}
                   onChange={handleChange}
-                  
                 />
               </div>
 
@@ -1440,7 +1505,6 @@ const EntregarDespensas = () => {
                     height: 200,
                     className: "signature-canvas",
                   }}
-                  
                 />
                 <button type="button" onClick={clearSignature}>
                   Limpiar Firma
@@ -1464,9 +1528,7 @@ const EntregarDespensas = () => {
         </section>
 
         <div className="form-buttons">
-          <button type="submit" >
-            Enviar
-          </button>
+          <button type="submit">Enviar</button>
         </div>
       </form>
     </div>

@@ -3,7 +3,7 @@ const mysql = require("mysql2");
 const cors = require("cors");
 const multer = require("multer");
 const path = require("path");
-const fs = require("fs"); // Import fs for file operations
+const fs = require("fs"); // Importar fs para operaciones de archivos
 const app = express();
 const bodyParser = require("body-parser");
 
@@ -22,13 +22,12 @@ app.listen(PORT, () => {
   console.log("Servidor escuchando en http://localhost:" + PORT);
 });
 
-// Enable CORS
+// Habilitar CORS
 app.use(cors());
 
-// Middleware to parse JSON requests
-app.use(express.json()); // Add this line to parse JSON requests
-app.use(bodyParser.urlencoded({ extended: true })); // For parsing form data
-
+// Middleware para analizar solicitudes JSON
+app.use(express.json());
+app.use(bodyParser.urlencoded({ extended: true })); // Para analizar datos de formularios
 
 // Conexión a la base de datos
 DB.connect((err) => {
@@ -38,28 +37,26 @@ DB.connect((err) => {
   console.log("Conexión exitosa");
 });
 
-// Create FirmasVales directory if it doesn't exist
+// Crear directorio FirmasVales si no existe
 const firmasDir = path.join(__dirname, 'FirmasVales');
 if (!fs.existsSync(firmasDir)){
     fs.mkdirSync(firmasDir, { recursive: true });
-    console.log('Created FirmasVales directory at:', firmasDir);
 }
 
-// Serve signature files from FirmasVales directory
+// Servir archivos de firmas desde el directorio FirmasVales
 app.use('/FirmasVales', express.static(path.join(__dirname, 'FirmasVales')));
 
-// Initialize Multer Storage Configuration
+// Configuración de almacenamiento Multer
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    cb(null, "./imagenes"); // Save files to the 'imagenes' directory
+    cb(null, "./imagenes"); // Guardar archivos en el directorio 'imagenes'
   },
   filename: (req, file, cb) => {
-    // Ensure 'nombreSolicitante' is provided
     if (!req.body.nombreSolicitante) {
       return cb(new Error("Nombre del solicitante es requerido"), null);
     }
 
-    // Generate a unique name for each file
+    // Generar un nombre único para cada archivo
     const uniqueName = `${req.body.nombreSolicitante}-${
       file.fieldname
     }${path.extname(file.originalname)}`;
@@ -67,13 +64,13 @@ const storage = multer.diskStorage({
   },
 });
 
-// Initialize Multer with Storage
+// Inicializar Multer con la configuración de almacenamiento
 const upload = multer({
   storage,
-  limits: { fileSize: 5 * 1024 * 1024 }, // Limit file size to 5MB
+  limits: { fileSize: 5 * 1024 * 1024 }, // Limitar tamaño de archivo a 5MB
 });
 
-// File Upload Endpoint
+// Endpoint para subir archivos
 app.post(
   "/api/upload-files",
   upload.fields([
@@ -84,12 +81,12 @@ app.post(
   ]),
   (req, res) => {
     try {
-      // Ensure at least one file is uploaded
+      // Verificar que al menos un archivo fue subido
       if (!req.files || Object.keys(req.files).length === 0) {
-        return res.status(400).json({ message: "No files were uploaded." });
+        return res.status(400).json({ message: "No se subieron archivos." });
       }
 
-      // Extract uploaded filenames
+      // Extraer nombres de archivos subidos
       const filenames = {
         ine1Name: req.files.ine1 ? req.files.ine1[0].filename : null,
         ine2Name: req.files.ine2 ? req.files.ine2[0].filename : null,
@@ -97,69 +94,126 @@ app.post(
         firmaName: req.files.firma ? req.files.firma[0].filename : null,
       };
 
-      res.json({ message: "Files uploaded successfully", filenames });
+      res.json({ message: "Archivos subidos exitosamente", filenames });
     } catch (error) {
-      console.error("Error uploading files:", error);
-      res.status(500).json({ message: "Error uploading files.", error });
+      res.status(500).json({ message: "Error al subir archivos.", error });
     }
   }
 );
 
-// Error Handling Middleware for Multer
+// Middleware para manejo de errores de Multer
 app.use((err, req, res, next) => {
   if (err instanceof multer.MulterError) {
-    // Handle Multer-specific errors
+    // Manejar errores específicos de Multer
     return res
       .status(400)
-      .json({ message: "Multer error", error: err.message });
+      .json({ message: "Error de Multer", error: err.message });
   } else if (err) {
-    // Handle other errors
+    // Manejar otros errores
     return res
       .status(500)
-      .json({ message: "Server error", error: err.message });
+      .json({ message: "Error del servidor", error: err.message });
   }
   next();
 });
 
-// Registro de despensas
-app.post("/registro-despensas", (req, res) => {
-  const { nombre, calle, numero, colonia, cp, telefono, zona } = req.body;
-
-  // Check for required fields
-  if (!nombre || !calle || !numero || !colonia || !cp || !telefono || !zona) {
-    return res
-      .status(400)
-      .json({ message: "Todos los campos son obligatorios." });
+// Endpoint para buscar en la tabla Registros
+app.get("/api/check-registros", (req, res) => {
+  const nombre = req.query.nombre;
+  
+  if (!nombre) {
+    return res.status(400).json({ message: "Nombre es requerido" });
   }
 
-  // Insert into the estudio_socioeconomico table (despensa part only)
   const query = `
-        INSERT INTO estudio_socioeconomico 
-        (nombre_solicitante, calle, numero, colonia, cp, tel, zona)
-        VALUES (?, ?, ?, ?, ?, ?, ?)
-    `;
+    SELECT *
+    FROM Registros
+    WHERE nombre_solicitante LIKE ? 
+    LIMIT 5
+  `;
 
-  const values = [nombre, calle, numero, colonia, cp, telefono, zona];
-
-  DB.query(query, values, (err, result) => {
+  DB.query(query, [`%${nombre}%`], (err, results) => {
     if (err) {
-      console.error("Error al insertar datos:", err);
-      return res.status(500).json({ message: "Error en el servidor." });
+      return res.status(500).json({ 
+        message: "Error al buscar nombres", 
+        error: err 
+      });
     }
-
-    res
-      .status(201)
-      .json({ message: "Registro exitoso", id_despensa: result.insertId });
+    res.json(results);
   });
 });
 
-// Endpoint to handle form submission
+// Endpoint para registro o actualización de despensas
+app.post("/registro-despensas", (req, res) => {
+  const { id_registro, nombre, calle, numero, colonia, cp, telefono, zona } = req.body;
+
+  // Verificar campos requeridos
+  if (!nombre || !calle || !numero || !colonia || !cp || !telefono || !zona) {
+    return res.status(400).json({ message: "Todos los campos son obligatorios." });
+  }
+
+  // Almacenar como string para preservar el número completo
+  const telString = telefono.replace(/\D/g, '');
+  
+  if (!telString) {
+    return res.status(400).json({ message: "Número de teléfono inválido" });
+  }
+
+  if (id_registro) {
+    // Actualizar registro existente
+    const updateQuery = `
+      UPDATE Registros 
+      SET nombre_solicitante = ?, 
+          calle = ?, 
+          numero = ?, 
+          colonia = ?, 
+          cp = ?, 
+          tel = ?, 
+          zona = ?,
+          ruta = 0
+      WHERE id_registro = ?
+    `;
+
+    const updateValues = [nombre, calle, numero, colonia, cp, telString, zona, id_registro];
+
+    DB.query(updateQuery, updateValues, (err, result) => {
+      if (err) {
+        return res.status(500).json({ message: "Error en el servidor." });
+      }
+
+      res.status(200).json({ 
+        message: "Actualización exitosa", 
+        id_registro: id_registro 
+      });
+    });
+  } else {
+    // Crear nuevo registro
+    const insertQuery = `
+      INSERT INTO Registros 
+      (nombre_solicitante, calle, numero, colonia, cp, tel, zona, ruta)
+      VALUES (?, ?, ?, ?, ?, ?, ?, 0)
+    `;
+
+    const insertValues = [nombre, calle, numero, colonia, cp, telString, zona];
+
+    DB.query(insertQuery, insertValues, (err, result) => {
+      if (err) {
+        return res.status(500).json({ message: "Error en el servidor." });
+      }
+
+      res.status(201).json({ 
+        message: "Registro exitoso", 
+        id_registro: result.insertId 
+      });
+    });
+  }
+});
+
+// Endpoint para estudio socioeconómico
 app.post("/api/estudio-socioeconomico", (req, res) => {
   const formData = req.body;
 
-  // Log all received data
-  console.log("Data received:", JSON.stringify(formData, null, 2));
-
+  // Campos requeridos
   const requiredFields = [
     "nombre_solicitante", "calle", "numero", "colonia", "cp", "tel", "zona", "motivo",
     "edad", "sexo", "genero", "estado_civil", "escolaridad", "ocupacion", "fecha_registro",
@@ -171,52 +225,49 @@ app.post("/api/estudio-socioeconomico", (req, res) => {
     "vehiculo", "situacionLegal", "materialParedes", "materialTecho", "materialPiso", "numCuartos", "nivelSocioEconomico", "firma", "ine1", "ine2", "ine3", "comentarios"
   ];
 
-  // Populate data, setting missing fields to null
+  // Poblar datos, estableciendo campos faltantes en null
   const data = {};
   for (const field of requiredFields) {
-    data[field] = formData[field] || null; // Use `null` for missing values
+    data[field] = formData[field] || null; // Utilizar null para valores faltantes
   }
 
-  // Generate SQL query
+  // Generar consulta SQL
   const columns = Object.keys(data).join(", ");
   const values = Object.values(data).map(value => (value !== null ? `'${value}'` : "NULL")).join(", ");
   const sql = `INSERT INTO estudio_socioeconomico (${columns}) VALUES (${values})`;
 
-  // Log SQL query for debugging
-  console.log("SQL Query:", sql);
-
-  // Execute the SQL query
+  // Ejecutar la consulta SQL
   DB.query(sql, (err, result) => {
     if (err) {
-      console.error("Error executing query:", err);
-      return res.status(500).json({ message: "Database error", details: err.message });
+      console.error("Error al ejecutar la consulta:", err);
+      return res.status(500).json({ message: "Error en la base de datos", detalles: err.message });
     }
 
-    // If everything is fine, return success with result
-    res.status(200).json({ message: "Data inserted successfully", result });
+    // Si todo está bien, devolver éxito con resultado
+    res.status(200).json({ message: "Datos insertados exitosamente", result });
   });
 });
 
-// Obtener despensas con ruta = 0
-app.get("/despensas/sin-ruta", (req, res) => {
+// Endpoint para obtener registros con ruta = 0
+app.get("/registros/sin-ruta", (req, res) => {
   const query = `
     SELECT 
-      id_despensa,
+      id_registro,
       nombre_solicitante,
       calle,
       numero,
       colonia,
       zona,
       ruta
-    FROM estudio_socioeconomico 
+    FROM Registros 
     WHERE ruta = 0 OR ruta IS NULL
   `;
   
   DB.query(query, (err, results) => {
     if (err) {
-      console.error("Error al obtener las despensas:", err);
+      console.error("Error al obtener los registros:", err);
       return res.status(500).json({ 
-        message: "Error al obtener despensas sin ruta", 
+        message: "Error al obtener registros sin ruta", 
         error: err 
       });
     }
@@ -224,23 +275,22 @@ app.get("/despensas/sin-ruta", (req, res) => {
   });
 });
 
-// Actualizar la ruta de una despensa
-app.post("/despensa/actualizar-ruta", (req, res) => {
-  const { id_despensa, ruta } = req.body; // Get both the ID and the new route value
+// Endpoint para actualizar la ruta de un registro
+app.post("/registro/actualizar-ruta", (req, res) => {
+  const { id_registro, ruta } = req.body;
   
-  const query = "UPDATE estudio_socioeconomico SET ruta = ? WHERE id_despensa = ?";
+  const query = "UPDATE Registros SET ruta = ? WHERE id_registro = ?";
   
-  DB.query(query, [ruta, id_despensa], (err, results) => {
+  DB.query(query, [ruta, id_registro], (err, results) => {
     if (err) {
-      console.error("Error al actualizar la despensa:", err);
+      console.error("Error al actualizar el registro:", err);
       return res.status(500).json({ message: "Error en el servidor." });
     }
     res.status(200).json({ message: "Ruta actualizada correctamente." });
   });
 });
 
-
-//Busqueda de vales
+// Endpoint para búsqueda de vales
 app.get("/registro_vales", (req, res) => {
   try {
     const { term, date } = req.query;
@@ -313,11 +363,11 @@ app.get("/registro_vales", (req, res) => {
   }
 });
 
-// User registration route
+// Endpoint para registro de usuarios
 app.post("/register", (req, res) => {
   const { nombre, email, pass, nivel } = req.body;
 
-  // Basic input validation
+  // Validación básica de entrada
   if (!nombre || !email || !pass || !nivel) {
     return res
       .status(400)
@@ -330,7 +380,7 @@ app.post("/register", (req, res) => {
     if (err) {
       return res
         .status(500)
-        .json({ error: "Error al registrar el usuario.", details: err });
+        .json({ error: "Error al registrar el usuario.", detalles: err });
     }
     res
       .status(200)
@@ -338,17 +388,17 @@ app.post("/register", (req, res) => {
   });
 });
 
-// Login endpoint
+// Endpoint para inicio de sesión
 app.post("/login", (req, res) => {
   const { email, pass } = req.body;
   
-  // Check if user exists
+  // Verificar si el usuario existe
   DB.query(
     "SELECT * FROM usuarios WHERE email = ?",
     [email],
     (err, results) => {
       if (err) {
-        console.error("Database error:", err); // Log database error
+        console.error("Error en la base de datos:", err); // Registrar error en la base de datos
         return res.status(500).send({ message: "Error en la base de datos" });
       }
 
@@ -358,12 +408,12 @@ app.post("/login", (req, res) => {
 
       const user = results[0];
 
-      // Compare plain text password
+      // Comparar contraseña en texto plano
       if (user.pass !== pass) {
         return res.status(401).send({ message: "Contraseña incorrecta" });
       }
 
-      // Authentication success, include the 'nivel' field in the response
+      // Autenticación exitosa, incluir el campo 'nivel' en la respuesta
       res.status(200).send({
         user: {
           id: user.id,
@@ -376,73 +426,73 @@ app.post("/login", (req, res) => {
   );
 });
 
-//nivel de usuario
+// Endpoint para obtener el nivel de un usuario
 app.get("/getUserNivel/:userId", (req, res) => {
   const userId = req.params.userId;
 
   const query = "SELECT nivel FROM usuarios WHERE id_usuario = ?";
   DB.query(query, [userId], (err, results) => {
     if (err) {
-      return res.status(500).send("Error fetching user nivel");
+      return res.status(500).send("Error al obtener el nivel del usuario");
     }
     if (results.length > 0) {
       res.json({ nivel: results[0].nivel });
     } else {
-      res.status(404).send("User not found");
+      res.status(404).send("Usuario no encontrado");
     }
   });
 });
 
-// Fetch all users
+// Endpoint para obtener todos los usuarios
 app.get("/usuarios", (req, res) => {
-  // Keep req here, even if not used
+  // Mantener req aquí, incluso si no se utiliza
   const query = "SELECT * FROM usuarios";
   DB.query(query, (err, results) => {
     if (err) {
       console.error(err);
-      return res.status(500).send("Error fetching users");
+      return res.status(500).send("Error al obtener los usuarios");
     }
-    res.json(results); // Send the results as JSON
+    res.json(results); // Enviar los resultados como JSON
   });
 });
 
-// Delete a user by id
+// Endpoint para eliminar un usuario por ID
 app.delete("/usuarios/:id", (req, res) => {
   const { id } = req.params;
   const query = "DELETE FROM usuarios WHERE id_usuario = ?";
   DB.query(query, [id], (err, result) => {
     if (err) {
       console.error(err);
-      return res.status(500).send("Error deleting user");
+      return res.status(500).send("Error al eliminar el usuario");
     }
     if (result.affectedRows === 0) {
-      return res.status(404).send("User not found");
+      return res.status(404).send("Usuario no encontrado");
     }
-    res.send("User deleted successfully");
+    res.send("Usuario eliminado exitosamente");
   });
 });
 
-// Ruta para guardar el formulario y la firma
+// Endpoint para guardar el formulario y la firma
 app.post("/api/submit-form", (req, res) => {
   const { nombreSolicitante, firmaFilename, signatureDataURL, ...otherData } =
     req.body;
 
   if (signatureDataURL) {
-    // Remove the base64 URL prefix
+    // Eliminar el prefijo de URL base64
     const base64Data = signatureDataURL.replace(/^data:image\/png;base64,/, "");
     const filePath = path.join(__dirname, "firmas", firmaFilename);
 
-    // Ensure the firmas directory exists
+    // Asegurarse de que el directorio firmas exista
     fs.mkdirSync(path.join(__dirname, "firmas"), { recursive: true });
 
-    // Save the image file
+    // Guardar el archivo de imagen
     fs.writeFile(filePath, base64Data, "base64", (err) => {
       if (err) {
-        console.error("Error saving signature:", err);
-        return res.status(500).json({ error: "Failed to save signature" });
+        console.error("Error al guardar la firma:", err);
+        return res.status(500).json({ error: "Error al guardar la firma" });
       }
 
-      // Prepare SQL data to save to MySQL
+      // Preparar datos SQL para guardar en MySQL
       const sql = "INSERT INTO estudio_socioeconomico SET ?";
       const formData = {
         ...otherData,
@@ -450,43 +500,101 @@ app.post("/api/submit-form", (req, res) => {
         firma: firmaFilename,
       };
 
-      // Insert form data into MySQL
+      // Insertar datos del formulario en MySQL
       DB.query(sql, formData, (err, result) => {
         if (err) {
-          console.error("Error saving to database:", err);
-          return res.status(500).json({ error: "Failed to save form data" });
+          console.error("Error al guardar en la base de datos:", err);
+          return res.status(500).json({ error: "Error al guardar los datos del formulario" });
         }
 
         res
           .status(200)
-          .json({ message: "Form and signature saved successfully" });
+          .json({ message: "Formulario y firma guardados exitosamente" });
       });
     });
   } else {
-    res.status(400).json({ error: "No signature provided" });
+    res.status(400).json({ error: "No se proporcionó firma" });
   }
 });
 
-// Get all delivery records
+// Endpoint para buscar en ambas tablas
 app.get("/api/check-delivery", (req, res) => {
-  const { nombre } = req.query;
+  const nombre = req.query.nombre;
   
-  const query =
-    "SELECT * FROM estudio_socioeconomico WHERE nombre_solicitante LIKE ?";
-  DB.query(query, [`%${nombre}%`], (err, result) => {
+  if (!nombre) {
+    return res.status(400).json({ message: "Nombre es requerido" });
+  }
+
+  // Primero buscar en estudio_socioeconomico
+  const queryEstudio = `
+    SELECT 
+      nombre_solicitante, motivo, edad, colonia, calle, numero, tel, zona, cp,
+      sexo, genero, escolaridad, ocupacion, estado_civil,
+      nombre_1, sexo_integrante_1, parentesco_1, edad_integrante_1, estado_civil_integrante_1,
+      ocupacion_integrante_1, escolaridad_integrante_1, ingreso_sol1,
+      nombre_2, sexo_integrante_2, parentesco_2, edad_integrante_2, estado_civil_integrante_2,
+      ocupacion_integrante_2, escolaridad_integrante_2, ingreso_sol2,
+      nombre_3, sexo_integrante_3, parentesco_3, edad_integrante_3, estado_civil_integrante_3,
+      ocupacion_integrante_3, escolaridad_integrante_3, ingreso_sol3,
+      ingreso_mensual, aportacion, luz, agua, telefono, creditos, gas, medicinas,
+      transporte, television, renta, alimentacion, escuela, internet, total,
+      vehiculo, situacionLegal, materialParedes, materialTecho, materialPiso,
+      numCuartos, nivelSocioEconomico,
+      'estudio_socioeconomico' as source
+    FROM estudio_socioeconomico
+    WHERE nombre_solicitante LIKE ? 
+    LIMIT 5
+  `;
+
+  // Buscar primero en estudio_socioeconomico
+  DB.query(queryEstudio, [`%${nombre}%`], (err, estudioResults) => {
     if (err) {
-      console.error(err);
-      return res.status(500).send("Database error");
+      return res.status(500).json({ 
+        message: "Error al buscar en estudio socioeconómico", 
+        error: err 
+      });
     }
-    res.json(result);
+
+    // Si encontramos resultados en estudio_socioeconomico, devolverlos inmediatamente
+    if (estudioResults && estudioResults.length > 0) {
+      return res.json(estudioResults.map(result => ({
+        ...result,
+        source: 'estudio_socioeconomico'
+      })));
+    }
+
+    // Si no hay resultados en estudio_socioeconomico, buscar en Registros
+    const queryRegistros = `
+      SELECT 
+        nombre_solicitante, calle, numero, colonia, cp, tel, zona,
+        'registros' as source
+      FROM Registros
+      WHERE nombre_solicitante LIKE ? 
+      LIMIT 5
+    `;
+
+    DB.query(queryRegistros, [`%${nombre}%`], (err, registrosResults) => {
+      if (err) {
+        return res.status(500).json({ 
+          message: "Error al buscar en registros", 
+          error: err 
+        });
+      }
+
+      // Devolver resultados de Registros
+      res.json(registrosResults.map(result => ({
+        ...result,
+        source: 'registros'
+      })));
+    });
   });
 });
 
 // Endpoint para registrar vales
 app.post("/registro_vales", async (req, res) => {
-  let firma1Path, firma2Path; // Declare these at the top
+  let firma1Path, firma2Path; // Declarar estas variables al principio
   
-  console.log('Received request body:', req.body); // Add logging
+  console.log('Solicitud recibida:', req.body); // Agregar registro
 
   const {
     Fecha,
@@ -512,15 +620,15 @@ app.post("/registro_vales", async (req, res) => {
     tipo  
   } = req.body;
 
-  // Promisify the query function
+  // Promisificar la función de consulta
   const query = (sql, values) => {
     return new Promise((resolve, reject) => {
       DB.query(sql, values, (error, results) => {
         if (error) {
-          console.error('Database error:', error); // Add logging
+          console.error('Error en la base de datos:', error); // Agregar registro
           reject(error);
         } else {
-          console.log('Query results:', results); // Add logging
+          console.log('Resultados de la consulta:', results); // Agregar registro
           resolve(results);
         }
       });
@@ -529,23 +637,23 @@ app.post("/registro_vales", async (req, res) => {
 
   try {
     if (!tipo || !['entrada', 'salida'].includes(tipo)) {
-      throw new Error("tipo is required and must be either 'entrada' or 'salida'");
+      throw new Error("tipo es requerido y debe ser 'entrada' o 'salida'");
     }
 
-    // Format date for filename
+    // Formatear fecha para el nombre del archivo
     const dateStr = new Date().toISOString().split('T')[0].replace(/-/g, '');
     
-    // Create filenames for signatures
+    // Crear nombres de archivo para firmas
     const firma1FileName = `${Solicitante}_${dateStr}_entrega.png`.replace(/\s+/g, '_');
     const firma2FileName = `${Recipiente}_${dateStr}_recibe.png`.replace(/\s+/g, '_');
 
-    // Save signature files
+    // Guardar archivos de firma
     firma1Path = path.join(firmasDir, firma1FileName);
     firma2Path = path.join(firmasDir, firma2FileName);
 
-    console.log('Saving signatures to:', { firma1Path, firma2Path }); // Add logging
+    console.log('Guardando firmas en:', { firma1Path, firma2Path }); // Agregar registro
 
-    // Save the base64 data as images
+    // Guardar datos base64 como imágenes
     if (Firma1) {
       const firma1Data = Buffer.from(Firma1.split(',')[1], 'base64');
       fs.writeFileSync(firma1Path, firma1Data);
@@ -556,11 +664,11 @@ app.post("/registro_vales", async (req, res) => {
       fs.writeFileSync(firma2Path, firma2Data);
     }
 
-    // Start transaction
-    console.log('Starting transaction'); // Add logging
+    // Iniciar transacción
+    console.log('Iniciando transacción'); // Agregar registro
     await query('START TRANSACTION');
 
-    // 1. First, insert the vale into registro_vales
+    // 1. Primero, insertar el vale en registro_vales
     const valeData = {
       fecha_entrega: Fecha,
       solicitante: Solicitante,
@@ -585,11 +693,11 @@ app.post("/registro_vales", async (req, res) => {
       tipo
     };
 
-    console.log('Inserting vale with data:', valeData); // Add logging
+    console.log('Insertando vale con datos:', valeData); // Agregar registro
 
     await query('INSERT INTO registro_vales SET ?', valeData);
 
-    // 2. Update inventory based on vale type
+    // 2. Actualizar inventario según el tipo de vale
     const inventoryFields = [
       'Despensas', 'MochilaPrimaria', 'MochilasSecundaria', 
       'MochilasPreparatoria', 'Colchonetas', 'Aguas', 'Pintura',
@@ -601,7 +709,7 @@ app.post("/registro_vales", async (req, res) => {
       const quantity = parseInt(req.body[field]) || 0;
       if (quantity > 0) {
         if (tipo === 'entrada') {
-          console.log(`Updating inventory for ${field}, adding ${quantity}`); // Add logging
+          console.log(`Actualizando inventario para ${field}, agregando ${quantity}`); // Agregar registro
           await query(
             `UPDATE inventario 
              SET ${field} = ${field} + ? 
@@ -609,12 +717,12 @@ app.post("/registro_vales", async (req, res) => {
             [quantity]
           );
         } else if (tipo === 'salida') {
-          // Check if enough inventory exists
+          // Verificar si hay suficiente inventario
           const [inventory] = await query(
             `SELECT ${field} FROM inventario WHERE id = 1`
           );
 
-          console.log(`Current inventory for ${field}:`, inventory); // Add logging
+          console.log(`Inventario actual para ${field}:`, inventory); // Agregar registro
 
           if (!inventory || inventory[field] < quantity) {
             throw new Error(`Inventario insuficiente de ${field}. Disponible: ${inventory ? inventory[field] : 0}`);
@@ -630,8 +738,8 @@ app.post("/registro_vales", async (req, res) => {
       }
     }
 
-    // If everything succeeded, commit the transaction
-    console.log('Committing transaction'); // Add logging
+    // Si todo salió bien, confirmar la transacción
+    console.log('Confirmar transacción'); // Agregar registro
     await query('COMMIT');
     
     res.json({ 
@@ -641,22 +749,22 @@ app.post("/registro_vales", async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Error in vale processing:', error); // Add logging
-    // If anything failed, rollback the transaction
+    console.error('Error al procesar el vale:', error); // Agregar registro
+    // Si algo falló, revertir la transacción
     try {
       await query('ROLLBACK');
-      console.log('Transaction rolled back'); // Add logging
+      console.log('Transacción revertida'); // Agregar registro
     } catch (rollbackError) {
-      console.error('Error during rollback:', rollbackError);
+      console.error('Error al revertir la transacción:', rollbackError);
     }
 
-    // Delete any created signature files
+    // Eliminar archivos de firma creados
     try {
       if (firma1Path && fs.existsSync(firma1Path)) fs.unlinkSync(firma1Path);
       if (firma2Path && fs.existsSync(firma2Path)) fs.unlinkSync(firma2Path);
-      console.log('Signature files deleted'); // Add logging
+      console.log('Archivos de firma eliminados'); // Agregar registro
     } catch (deleteError) {
-      console.error('Error deleting signature files:', deleteError);
+      console.error('Error al eliminar archivos de firma:', deleteError);
     }
 
     res.status(500).json({ 
@@ -665,7 +773,7 @@ app.post("/registro_vales", async (req, res) => {
   }
 });
 
-// Get all vales
+// Endpoint para obtener todos los vales
 app.get("/vales", (req, res) => {
   const query = "SELECT * FROM registro_vales ORDER BY fecha_entrega DESC";
   
@@ -679,13 +787,13 @@ app.get("/vales", (req, res) => {
   });
 });
 
-// Get inventory endpoint
+// Endpoint para obtener el inventario
 app.get("/inventario", (req, res) => {
   const query = "SELECT * FROM inventario";
   
   DB.query(query, (err, result) => {
     if (err) {
-      console.error("Error fetching inventory:", err);
+      console.error("Error al obtener el inventario:", err);
       res.status(500).json({ error: "Error al obtener el inventario" });
       return;
     }

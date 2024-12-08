@@ -1,9 +1,11 @@
 .registro-despensas-container {
-    margin: 0 auto;
-    padding: 20px;
-    font-family: Arial, sans-serif;
     max-width: 800px;
-    box-sizing: border-box;
+    margin: 20px auto;
+    padding: 20px;
+    background-color: #ffffff;
+    border-radius: 8px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    font-family: Arial, sans-serif;
     min-height: calc(100vh - 175px); 
 }
 
@@ -27,6 +29,7 @@
     box-sizing: border-box;
     border: 1px solid #ddd;
     border-radius: 4px;
+    background-color: #ffffff;
 }
 
 .registro-despensas-submit-button {
