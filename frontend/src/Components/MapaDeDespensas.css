@@ -1,6 +1,6 @@
 /* General Container */
 .mapa-despensas {
-    max-width: 1200px;
+    max-width: 1500px;
     width: 100%;
     margin: 0 auto;
     padding: 25px;
@@ -286,5 +286,63 @@
     .mapa-despensas__routes-item,
     .mapa-despensas__selected-item {
         font-size: 0.9rem;
+    }
+}
+
+/* Media Query for iPad Mini (768 x 1024) */
+@media screen and (min-width: 768px) and (max-width: 1024px) {
+    .mapa-despensas {
+        padding: 15px;
+        min-height: calc(100vh - 140px);
+        width: 100%;
+    }
+
+    .mapa-despensas__title {
+        font-size: 2rem;
+        margin-bottom: 20px;
+    }
+
+    .mapa-despensas__subtitle,
+    .mapa-despensas__available-routes-title {
+        font-size: 1.3rem;
+        margin: 15px 0;
+    }
+
+    .mapa-despensas__header-bar {
+        font-size: 1rem;
+        padding: 8px 12px;
+    }
+
+    .mapa-despensas__routes ul {
+        max-height: calc(70px * 4);
+    }
+
+    .mapa-despensas__routes li {
+        padding: 12px;
+        margin-bottom: 12px;
+    }
+
+    .despensa-item__address {
+        font-size: 0.95rem;
+    }
+
+    .mapa-despensas__address-colonia {
+        font-size: 0.85rem;
+    }
+
+    .btn-delivered,
+    .btn-not-delivered {
+        padding: 6px 10px;
+        font-size: 0.9rem;
+    }
+
+    .mapa-despensas__map-container {
+        margin: 20px 0;
+        height: 500px;
+    }
+
+    .mapa-despensas__warning {
+        font-size: 0.85rem;
+        padding: 4px 8px;
     }
 }

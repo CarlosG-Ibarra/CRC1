@@ -8,7 +8,7 @@ import "./MapaDeDespensas.css";
 const GOOGLE_MAPS_LIBRARIES = ['places', 'geometry'];
 
 // Configuración de la API de Google Maps
-const GOOGLE_MAPS_API_KEY = "AIzaSyAkE1Y9e8WFfw_f7LUrNow1_xouN3ADxUM";
+const GOOGLE_MAPS_API_KEY = "";
 
 // Coordenadas del centro de Chihuahua para inicializar el mapa
 const CHIHUAHUA_CENTER = {
