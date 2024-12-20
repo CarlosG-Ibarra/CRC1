@@ -31,9 +31,7 @@ function RegistroDespensas() {
       }, 200);
     }
 
-    // Handle telephone number input
     if (name === 'telefono') {
-      // Only allow numbers and limit to 10 digits
       const numericValue = value.replace(/\D/g, '').slice(0, 10);
       setFormData({
         ...formData,
@@ -89,7 +87,7 @@ function RegistroDespensas() {
     e.preventDefault();
     try {
       const response = await fetch('http://localhost:3001/registro-despensas', {
-        method: 'POST',  // Always use POST for both create and update
+        method: 'POST',  
         headers: {
           'Content-Type': 'application/json',
         },

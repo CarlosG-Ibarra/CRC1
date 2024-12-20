@@ -3,7 +3,7 @@ const mysql = require("mysql2");
 const cors = require("cors");
 const multer = require("multer");
 const path = require("path");
-const fs = require("fs"); // Importar fs para operaciones de archivos
+const fs = require("fs"); 
 const app = express();
 const bodyParser = require("body-parser");
 

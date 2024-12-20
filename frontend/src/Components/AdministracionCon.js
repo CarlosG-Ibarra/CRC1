@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
-import "./AdministracionCon.css"; // Ensure this matches your CSS file name
+import "./AdministracionCon.css"; 
 
 function AdministracionCon() {
   const [usuarios, setUsuarios] = useState([]);
